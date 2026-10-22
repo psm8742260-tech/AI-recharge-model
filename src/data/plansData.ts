@@ -1,0 +1,107 @@
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  durationMonths: number;
+  durationDays: number;
+  priceINR: number;
+  priceUSD: number;
+  dataPackMB: number; // e.g. 2048 MB = 2 GB
+  dataPackGB: number; // e.g. 2.0
+  dailyLimitMB: number; // e.g. 800 MB daily speed limit
+  badge?: string;
+  popular?: boolean;
+  features: string[];
+  customField1?: string;
+  customField2?: string;
+}
+
+export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
+  {
+    id: 'plan-1m',
+    name: '1 Month Starter Pack',
+    durationMonths: 1,
+    durationDays: 30,
+    priceINR: 399,
+    priceUSD: 4.99,
+    dataPackMB: 2048, // 2 GB
+    dataPackGB: 2.0,
+    dailyLimitMB: 800,
+    badge: 'Starter',
+    features: [
+      '2 GB Total High-Speed AI Data Pack',
+      '800 MB Daily High-Speed Usage Limit',
+      'Access to ALL 20 AI Models',
+      'Instant Custom API Key (sk-airecharge-...)',
+      'Reverse Proxy Gateway Access',
+      'Live Token-to-MB Magic Receipts'
+    ]
+  },
+  {
+    id: 'plan-2m',
+    name: '2 Months Pro Pack',
+    durationMonths: 2,
+    durationDays: 60,
+    priceINR: 699,
+    priceUSD: 8.49,
+    dataPackMB: 5120, // 5 GB
+    dataPackGB: 5.0,
+    dailyLimitMB: 1200,
+    popular: true,
+    badge: 'Most Popular',
+    features: [
+      '5 GB Total High-Speed AI Data Pack',
+      '1.2 GB Daily High-Speed Usage Limit',
+      'Access to ALL 20 AI Models',
+      'Instant Custom API Key (sk-airecharge-...)',
+      'Priority Gateway Bandwidth',
+      'Live Token-to-MB Magic Receipts',
+      '24/7 Priority Gateway Proxy Routing'
+    ]
+  },
+  {
+    id: 'plan-3m',
+    name: '3 Months Ultra Pack',
+    durationMonths: 3,
+    durationDays: 90,
+    priceINR: 999,
+    priceUSD: 11.99,
+    dataPackMB: 10240, // 10 GB
+    dataPackGB: 10.0,
+    dailyLimitMB: 2048,
+    badge: 'Best Value',
+    features: [
+      '10 GB Total High-Speed AI Data Pack',
+      '2 GB Daily High-Speed Usage Limit',
+      'Access to ALL 20 AI Models (Including o1 & Opus)',
+      'Instant Custom API Key (sk-airecharge-...)',
+      'Unlimited Key Regeneration',
+      'Live Token-to-MB Magic Receipts',
+      'Dedicated Gateway Channel'
+    ]
+  }
+];
+
+export interface TopUpPack {
+  id: string;
+  name: string;
+  priceINR: number;
+  dataMB: number;
+  description: string;
+}
+
+export const TOP_UP_PACKS: TopUpPack[] = [
+  {
+    id: 'topup-500mb',
+    name: 'Micro Recharge Top-Up',
+    priceINR: 99,
+    dataMB: 500,
+    description: 'Instantly add 500 MB data pack to your active subscription without changing validity.'
+  },
+  {
+    id: 'topup-1gb',
+    name: 'Standard Boost Pack',
+    priceINR: 179,
+    dataMB: 1024,
+    description: 'Instantly add 1 GB (1,024 MB) data pack for high-volume developer coding sessions.'
+  }
+];

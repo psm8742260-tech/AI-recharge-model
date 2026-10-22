@@ -1,0 +1,6 @@
+{
+  "name": "AI Recharge Models",
+  "description": "Prepaid AI Model Data Packs with custom API keys, reverse proxy gateway, token quota deduction, and magic receipt headers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
