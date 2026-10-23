@@ -27,11 +27,11 @@ class Store:
         self.receipts = []
         self.transactions = []
         self.system_config = {
-            "gatewayName": "AI Recharge Hybrid Gateway v2.1 (Python)",
+            "gatewayName": "AI Recharge HYBRID GATEWAY",
             "tokenDeductionMultiplier": 1.15,
             "defaultDailyLimitMB": 800,
             "isMaintenanceMode": False,
-            "hybridVersion": "2.1.0-py",
+            "hybridEngineStatus": "ACTIVE",
             "adminEmail": ADMIN_EMAIL,
             "adminMobile": ADMIN_MOBILE,
             "adminPassword": ADMIN_PASSWORD,
@@ -200,7 +200,7 @@ def proxy_chat():
     
     try:
         # Simulated AI Response for VPS Template parity
-        completion_text = f"[Python Proxy v2.1] Answer for {model}: Token deduction logic validated."
+        completion_text = f"[Python Proxy] Answer for {model}: Token deduction logic validated."
         completion_tokens = max(15, int(len(completion_text) / 3.8))
         
         # Deduction Formula with Multiplier

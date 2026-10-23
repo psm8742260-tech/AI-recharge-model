@@ -5,18 +5,21 @@ import { Navbar } from './components/Navbar';
 import { LandingHero } from './components/LandingHero';
 import { ModelsGrid } from './components/ModelsGrid';
 import { ModelDetailModal } from './components/ModelDetailModal';
-import { SubscriptionModal } from './components/SubscriptionModal';
+import { PaymentGatewayModal } from './components/PaymentGatewayModal';
 import { Playground } from './components/Playground';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import { AuthModal } from './components/AuthModal';
 import { AdminPanel } from './components/AdminPanel';
+import { KeysManager } from './components/KeysManager';
+import { DataPacks } from './components/DataPacks';
+import { SubscriptionPlans } from './components/SubscriptionPlans';
 import { Bot, Key, Sparkles, ShieldCheck, Heart } from 'lucide-react';
 
 export default function App() {
   const [user, setUser] = useState<UserAccount | null>(null);
   const [receipts, setReceipts] = useState<MagicReceipt[]>([]);
   const [transactions, setTransactions] = useState<RechargeTransaction[]>([]);
-  const [activeTab, setActiveTab] = useState<'models' | 'playground' | 'analytics' | 'pricing' | 'keys' | 'admin'>('models');
+  const [activeTab, setActiveTab] = useState<'models' | 'playground' | 'analytics' | 'pricing' | 'keys' | 'admin' | 'datapacks' | 'plans'>('models');
   
   const [selectedModelDetail, setSelectedModelDetail] = useState<AIModel | null>(null);
   const [isRechargeOpen, setIsRechargeOpen] = useState(false);
@@ -72,7 +75,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 font-sans selection:bg-cyan-500 selection:text-slate-950">
+    <div className="min-h-screen flex flex-col bg-slate-900/60 text-slate-100 font-sans selection:bg-cyan-500 selection:text-slate-950">
       
       {/* Top Navbar */}
       <Navbar
@@ -120,6 +123,7 @@ export default function App() {
             initialModelId={playgroundModelId}
             onOpenRecharge={() => setIsRechargeOpen(true)}
             onReceiptGenerated={handleReceiptGenerated}
+            onBack={() => setActiveTab('models')}
           />
         )}
 
@@ -131,23 +135,38 @@ export default function App() {
             transactions={transactions}
             onOpenRecharge={() => setIsRechargeOpen(true)}
             onRegenerateKey={handleRegenerateKey}
+            onBack={() => setActiveTab('models')}
           />
         )}
 
         {/* Tab 4: Keys List */}
         {activeTab === 'keys' && (
-          <AnalyticsDashboard
+          <KeysManager
             user={user}
-            receipts={receipts}
-            transactions={transactions}
-            onOpenRecharge={() => setIsRechargeOpen(true)}
             onRegenerateKey={handleRegenerateKey}
+            onBack={() => setActiveTab('models')}
           />
         )}
 
         {/* Tab 5: Admin Control Panel */}
         {activeTab === 'admin' && (
-          <AdminPanel user={user} />
+          <AdminPanel user={user} onBack={() => setActiveTab('models')} />
+        )}
+
+        {/* Tab 6: Data Packs Viewer */}
+        {activeTab === 'datapacks' && (
+          <DataPacks
+            onOpenRecharge={() => setIsRechargeOpen(true)}
+            onBack={() => setActiveTab('models')}
+          />
+        )}
+
+        {/* Tab 7: Subscription Plans */}
+        {activeTab === 'plans' && (
+          <SubscriptionPlans
+            onOpenRecharge={() => setIsRechargeOpen(true)}
+            onBack={() => setActiveTab('models')}
+          />
         )}
 
       </main>
@@ -182,7 +201,7 @@ export default function App() {
         }}
       />
 
-      <SubscriptionModal
+      <PaymentGatewayModal
         isOpen={isRechargeOpen}
         onClose={() => setIsRechargeOpen(false)}
         user={user}

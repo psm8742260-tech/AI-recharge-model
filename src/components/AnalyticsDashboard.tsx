@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { UserAccount, MagicReceipt, RechargeTransaction } from '../types';
-import { BarChart3, Key, Receipt, RefreshCw, Copy, Check, ShieldCheck, Sparkles, Clock, AlertTriangle, ArrowUpRight } from 'lucide-react';
+import { BarChart3, Key, Receipt, RefreshCw, Copy, Check, ShieldCheck, Sparkles, Clock, AlertTriangle, ArrowUpRight, ArrowLeft } from 'lucide-react';
 
 interface AnalyticsDashboardProps {
   user: UserAccount | null;
@@ -8,6 +8,7 @@ interface AnalyticsDashboardProps {
   transactions: RechargeTransaction[];
   onOpenRecharge: () => void;
   onRegenerateKey: () => void;
+  onBack: () => void;
 }
 
 export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
@@ -16,6 +17,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
   transactions,
   onOpenRecharge,
   onRegenerateKey,
+  onBack,
 }) => {
   const [copiedKeyIndex, setCopiedKeyIndex] = useState<number | null>(null);
   const [isRegenerating, setIsRegenerating] = useState(false);
@@ -55,11 +57,19 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-800 pb-6">
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-1 flex items-center gap-1.5">
-            <BarChart3 className="w-4 h-4" />
-            PE Money Quota Analytics & Magic Receipts
-          </div>
+        <div className="flex items-start gap-4">
+          <button
+            onClick={onBack}
+            className="mt-1 p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/50 transition-all shadow-lg"
+            title="మళ్ళీ వెనక్కి వెళ్ళండి"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-1 flex items-center gap-1.5">
+              <BarChart3 className="w-4 h-4" />
+              PE Money Quota Analytics & Magic Receipts
+            </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
             PE Usage Dashboard
           </h2>
@@ -67,6 +77,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
             Real-time PE data pack consumption telemetry for <span className="text-slate-200 font-bold">{user.email}</span>.
           </p>
         </div>
+      </div>
 
         <button
           onClick={onOpenRecharge}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AIModel } from '../data/modelsData';
-import { X, Zap, BrainCircuit, Code2, Copy, Check, Terminal, ShieldCheck, Sparkles, Cpu } from 'lucide-react';
+import { X, Zap, BrainCircuit, Code2, Copy, Check, Terminal, ShieldCheck, Sparkles, Cpu, ArrowLeft } from 'lucide-react';
 
 interface ModelDetailModalProps {
   model: AIModel | null;
@@ -34,59 +34,60 @@ export const ModelDetailModal: React.FC<ModelDetailModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-6 sm:p-8 relative shadow-2xl space-y-6 my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 bg-slate-950/80 backdrop-blur-md">
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-4 sm:p-6 relative shadow-2xl space-y-4 my-2 max-h-[95vh] overflow-y-auto">
         
-        {/* Close Button */}
+        {/* Back Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800/80 hover:bg-slate-800 transition-colors"
+          className="absolute top-4 left-4 p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/50 transition-all shadow-lg"
+          title="మళ్ళీ వెనక్కి వెళ్ళండి"
         >
-          <X className="w-5 h-5" />
+          <ArrowLeft className="w-4 h-4" />
         </button>
 
         {/* Model Header */}
-        <div className="flex items-start gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-2xl shrink-0">
+        <div className="flex items-start gap-4 pt-8">
+          <div className="w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-xl shrink-0">
             {model.providerLogo}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-cyan-400 uppercase tracking-wider">{model.provider}</span>
+              <span className="text-[10px] font-semibold text-cyan-400 uppercase tracking-wider">{model.provider}</span>
               <span className="text-slate-600">·</span>
-              <span className="text-xs text-slate-400">{model.category}</span>
+              <span className="text-[10px] text-slate-400">{model.category}</span>
             </div>
-            <h2 className="text-2xl font-extrabold text-white mt-0.5">{model.name}</h2>
-            <p className="text-xs text-slate-300 mt-1 leading-relaxed">{model.tagline}</p>
+            <h2 className="text-xl font-extrabold text-white mt-0.5">{model.name}</h2>
+            <p className="text-[10px] text-slate-300 mt-0.5 leading-relaxed">{model.tagline}</p>
           </div>
         </div>
 
         {/* Extended Description */}
-        <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 text-xs text-slate-300 leading-relaxed">
+        <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 text-[10px] text-slate-300 leading-relaxed">
           {model.description}
         </div>
 
         {/* Performance Benchmark Bar Matrix */}
-        <div className="grid grid-cols-3 gap-3 p-4 rounded-2xl bg-slate-950/80 border border-slate-800">
-          <div className="text-center">
-            <div className="text-[10px] text-slate-400 uppercase font-semibold flex items-center justify-center gap-1 mb-1">
-              <Zap className="w-3 h-3 text-amber-400" /> Speed Rating
-            </div>
-            <div className="text-lg font-mono font-extrabold text-amber-400">{model.speedRating}<span className="text-xs text-slate-500">/100</span></div>
+        <div className="space-y-1">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[8px] font-bold text-emerald-400 uppercase tracking-tighter">Hybrid AI Engine Verified</span>
+            <span className="text-[8px] text-slate-500 font-mono">v4.0.2</span>
           </div>
-
-          <div className="text-center border-x border-slate-800">
-            <div className="text-[10px] text-slate-400 uppercase font-semibold flex items-center justify-center gap-1 mb-1">
-              <BrainCircuit className="w-3 h-3 text-cyan-400" /> Reasoning
+          <div className="grid grid-cols-3 gap-0.5 p-0.5 rounded-lg bg-emerald-500/5 border border-emerald-500/40 h-[36px] items-center">
+            <div className="text-center min-w-0">
+              <div className="text-[6px] text-slate-400 uppercase font-bold truncate">Speed</div>
+              <div className="text-[10px] font-mono font-black text-amber-400 leading-none">{model.speedRating}<span className="text-[6px] text-slate-500">/100</span></div>
             </div>
-            <div className="text-lg font-mono font-extrabold text-cyan-400">{model.reasoningScore}<span className="text-xs text-slate-500">/100</span></div>
-          </div>
 
-          <div className="text-center">
-            <div className="text-[10px] text-slate-400 uppercase font-semibold flex items-center justify-center gap-1 mb-1">
-              <Code2 className="w-3 h-3 text-emerald-400" /> Coding
+            <div className="text-center min-w-0 border-x border-emerald-500/20">
+              <div className="text-[6px] text-slate-400 uppercase font-bold truncate">Reasoning</div>
+              <div className="text-[10px] font-mono font-black text-cyan-400 leading-none">{model.reasoningScore}<span className="text-[6px] text-slate-500">/100</span></div>
             </div>
-            <div className="text-lg font-mono font-extrabold text-emerald-400">{model.codingScore}<span className="text-xs text-slate-500">/100</span></div>
+
+            <div className="text-center min-w-0">
+              <div className="text-[6px] text-slate-400 uppercase font-bold truncate">Coding</div>
+              <div className="text-[10px] font-mono font-black text-emerald-400 leading-none">{model.codingScore}<span className="text-[6px] text-slate-500">/100</span></div>
+            </div>
           </div>
         </div>
 

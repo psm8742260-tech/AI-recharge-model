@@ -3,6 +3,10 @@
 @layer base {
   body {
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: #0f172a;
+    background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 80%);
+    color: #f8fafc;
+    min-height: 100vh;
   }
   code, pre, .font-mono {
     font-family: 'JetBrains Mono', monospace;
@@ -39,5 +43,38 @@
   background-image: 
     linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+}
+
+/* 5-Color Hybrid Engine Cycling Glow Animation for Admin Lock Icon */
+@keyframes hybridEngine5ColorCycle {
+  0%, 100% {
+    color: #22d3ee; /* Cyan */
+    border-color: rgba(34, 211, 238, 0.8);
+    box-shadow: 0 0 12px rgba(34, 211, 238, 0.6);
+  }
+  20% {
+    color: #34d399; /* Emerald */
+    border-color: rgba(52, 211, 153, 0.8);
+    box-shadow: 0 0 12px rgba(52, 211, 153, 0.6);
+  }
+  40% {
+    color: #c084fc; /* Purple */
+    border-color: rgba(192, 132, 252, 0.8);
+    box-shadow: 0 0 12px rgba(192, 132, 252, 0.6);
+  }
+  60% {
+    color: #fbbf24; /* Amber */
+    border-color: rgba(251, 191, 36, 0.8);
+    box-shadow: 0 0 12px rgba(251, 191, 36, 0.6);
+  }
+  80% {
+    color: #fb7185; /* Rose */
+    border-color: rgba(251, 113, 133, 0.8);
+    box-shadow: 0 0 12px rgba(251, 113, 133, 0.6);
+  }
+}
+
+.animate-hybrid-engine-glow {
+  animation: hybridEngine5ColorCycle 4s infinite ease-in-out;
 }
 

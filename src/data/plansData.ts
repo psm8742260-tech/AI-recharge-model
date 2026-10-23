@@ -13,6 +13,8 @@ export interface SubscriptionPlan {
   features: string[];
   customField1?: string;
   customField2?: string;
+  customField3?: string;
+  customField4?: string;
 }
 
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
@@ -31,7 +33,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
       '2 GB Total High-Speed AI Data Pack',
       '800 MB Daily High-Speed Usage Limit',
       'Access to ALL 20 AI Models',
-      'Instant Custom API Key (sk-airecharge-...)',
+      'Instant Gateway Auto-Activation',
       'Reverse Proxy Gateway Access',
       'Live Token-to-MB Magic Receipts'
     ]
@@ -52,7 +54,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
       '5 GB Total High-Speed AI Data Pack',
       '1.2 GB Daily High-Speed Usage Limit',
       'Access to ALL 20 AI Models',
-      'Instant Custom API Key (sk-airecharge-...)',
+      'Instant Gateway Auto-Activation',
       'Priority Gateway Bandwidth',
       'Live Token-to-MB Magic Receipts',
       '24/7 Priority Gateway Proxy Routing'
@@ -73,7 +75,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
       '10 GB Total High-Speed AI Data Pack',
       '2 GB Daily High-Speed Usage Limit',
       'Access to ALL 20 AI Models (Including o1 & Opus)',
-      'Instant Custom API Key (sk-airecharge-...)',
+      'Instant Gateway Auto-Activation',
       'Unlimited Key Regeneration',
       'Live Token-to-MB Magic Receipts',
       'Dedicated Gateway Channel'

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Bot, Mail, Lock, User, ShieldCheck, ArrowRight, Sparkles } from 'lucide-react';
+import { X, Bot, Mail, Lock, User, ShieldCheck, ArrowRight, Sparkles, ArrowLeft } from 'lucide-react';
 import { UserAccount } from '../types';
 
 interface AuthModalProps {
@@ -54,12 +54,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
       <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 sm:p-8 relative shadow-2xl space-y-6">
         
-        {/* Close Button */}
+        {/* Back Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800/80 hover:bg-slate-800 transition-colors"
+          className="absolute top-5 left-5 p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/50 transition-all shadow-lg"
+          title="మళ్ళీ వెనక్కి వెళ్ళండి"
         >
-          <X className="w-5 h-5" />
+          <ArrowLeft className="w-4 h-4" />
         </button>
 
         {/* Modal Brand Lockup */}

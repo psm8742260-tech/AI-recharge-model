@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { AIModel, AI_MODELS } from '../data/modelsData';
 import { UserAccount, MagicReceipt } from '../types';
-import { Terminal, Send, Copy, Check, Sparkles, Receipt, Zap, ShieldAlert, Cpu, Code2 } from 'lucide-react';
+import { Terminal, Send, Copy, Check, Sparkles, Receipt, Zap, ShieldAlert, Cpu, Code2, ArrowLeft } from 'lucide-react';
 
 interface PlaygroundProps {
   user: UserAccount | null;
   initialModelId?: string;
   onOpenRecharge: () => void;
   onReceiptGenerated: (receipt: MagicReceipt) => void;
+  onBack: () => void;
 }
 
 export const Playground: React.FC<PlaygroundProps> = ({
@@ -15,6 +16,7 @@ export const Playground: React.FC<PlaygroundProps> = ({
   initialModelId,
   onOpenRecharge,
   onReceiptGenerated,
+  onBack,
 }) => {
   const [selectedModelId, setSelectedModelId] = useState<string>(initialModelId || 'deepseek-v3');
   const [promptInput, setPromptInput] = useState<string>(
@@ -136,11 +138,19 @@ console.log('Magic Receipt:', data.magicReceipt);`;
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-800 pb-6">
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-1 flex items-center gap-1.5">
-            <Terminal className="w-4 h-4" />
-            Reverse Proxy Gateway Sandbox
-          </div>
+        <div className="flex items-start gap-4">
+          <button
+            onClick={onBack}
+            className="mt-1 p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/50 transition-all shadow-lg"
+            title="మళ్ళీ వెనక్కి వెళ్ళండి"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-1 flex items-center gap-1.5">
+              <Terminal className="w-4 h-4" />
+              Reverse Proxy Gateway Sandbox
+            </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
             Live API Playground
           </h2>
@@ -148,6 +158,7 @@ console.log('Magic Receipt:', data.magicReceipt);`;
             Test any model using your active <code className="text-cyan-300 font-mono">phrs-</code> bearer key and inspect live magic receipts.
           </p>
         </div>
+      </div>
 
         <button
           onClick={onOpenRecharge}

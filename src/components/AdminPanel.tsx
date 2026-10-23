@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Zap, Sparkles, Settings, Database, Activity, Save, Plus, Trash2, ShieldAlert, Cpu, ShieldCheck } from 'lucide-react';
+import { Shield, Zap, Sparkles, Settings, Database, Activity, Save, Plus, Trash2, ShieldAlert, Cpu, ShieldCheck, ArrowLeft } from 'lucide-react';
 import { SubscriptionPlan, TopUpPack } from '../data/plansData';
 import { UserAccount } from '../types';
 
 interface AdminPanelProps {
   user: UserAccount | null;
+  onBack: () => void;
 }
 
 interface AdminConfig {
@@ -13,11 +14,12 @@ interface AdminConfig {
   defaultDailyLimitMB: number;
   isMaintenanceMode: boolean;
   isPaymentEnabled: boolean;
-  hybridVersion: string;
+  hybridEngineStatus: string;
   adminEmail: string;
+  masterPin?: string;
 }
 
-export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
+export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack }) => {
   const [activeTab, setActiveTab] = useState(0);
   const [config, setConfig] = useState<AdminConfig | null>(null);
   const [users, setUsers] = useState<UserAccount[]>([]);
@@ -159,23 +161,62 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
     <div className="space-y-8 pb-16">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-800 pb-6">
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-1 flex items-center gap-1.5">
-            <Shield className="w-4 h-4" />
-            Master Control Admin Panel
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onBack}
+              className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/50 transition-all shadow-lg"
+              title="మళ్ళీ వెనక్కి వెళ్ళండి"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            
+            {/* Admin Access Toggle */}
+            {config && (
+              <button
+                onClick={async () => {
+                  const newConfig = { ...config, isPaymentEnabled: !config.isPaymentEnabled };
+                  setConfig(newConfig);
+                  setIsSaving(true);
+                  try {
+                    await fetch('/api/admin/config', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ config: newConfig }),
+                    });
+                  } finally {
+                    setIsSaving(false);
+                  }
+                }}
+                className={`p-2 rounded-lg border transition-all shadow-lg flex items-center justify-center ${
+                  !config.isPaymentEnabled 
+                    ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400' 
+                    : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-400'
+                }`}
+                title={config.isPaymentEnabled ? "అడ్మిన్ యాక్సెస్ ఆన్ చేయండి" : "అడ్మిన్ యాక్సెస్ ఆఫ్ చేయండి"}
+              >
+                <ShieldCheck className={`w-4 h-4 ${!config.isPaymentEnabled ? 'animate-pulse' : ''}`} />
+              </button>
+            )}
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
-            Gateway Management
-          </h2>
-          <p className="text-xs text-slate-400 mt-1">
-            Configure token economics, recharge plans, and system-level parameters.
-          </p>
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-1 flex items-center gap-1.5">
+              <Shield className="w-4 h-4" />
+              Master Control Admin Panel
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
+              Gateway Management
+            </h2>
+            <p className="text-xs text-slate-400 mt-1">
+              Configure token economics, recharge plans, and system-level parameters.
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
           <div className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-[10px] font-bold text-slate-400 flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            HYBRID ENGINE v{config?.hybridVersion}
+            HYBRID ENGINE & PWA
           </div>
         </div>
       </div>
@@ -234,6 +275,59 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
         {/* Tab 0: Recharge Management */}
         {activeTab === 0 && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Global Payment Section Admin Control */}
+            {config && (
+              <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
+                    config.isPaymentEnabled
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                      : 'bg-rose-500/10 border-rose-500/30 text-rose-400'
+                  }`}>
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                      పేమెంట్ సెక్షన్ అడ్మిన్ కంట్రోల్ (అడ్మిన్ యాక్సెస్)
+                    </h4>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      గ్లోబల్‌గా రీఛార్జ్ మరియు సబ్‌స్క్రిప్షన్ ప్లాన్‌ల పేమెంట్ యాక్సెస్‌ను ఆన్ లేదా ఆఫ్ చేయండి.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={async () => {
+                    const pin = prompt('మాస్టర్ పిన్ ఎంటర్ చేయండి (Master PIN):');
+                    if (pin !== '6606.0k' && pin !== '6606.ok' && pin !== config.masterPin) {
+                      alert('తప్పు మాస్టర్ పిన్! (Invalid Master PIN)');
+                      return;
+                    }
+                    const newConfig = { ...config, isPaymentEnabled: !config.isPaymentEnabled };
+                    setConfig(newConfig);
+                    setIsSaving(true);
+                    try {
+                      await fetch('/api/admin/config', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ config: newConfig }),
+                      });
+                      alert(`అడ్మిన్ యాక్సెస్ విజయవంతంగా ${newConfig.isPaymentEnabled ? 'ఆన్' : 'ఆఫ్'} చేయబడింది!`);
+                    } finally {
+                      setIsSaving(false);
+                    }
+                  }}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 border shadow-lg ${
+                    config.isPaymentEnabled
+                      ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/30'
+                      : 'bg-rose-500/20 border-rose-500/50 text-rose-400 hover:bg-rose-500/30'
+                  }`}
+                >
+                  <ShieldCheck className={`w-4 h-4 ${config.isPaymentEnabled ? 'animate-pulse' : ''}`} />
+                  అడ్మిన్ యాక్సెస్ {config.isPaymentEnabled ? 'ఆన్' : 'ఆఫ్'}
+                </button>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {plans.map((plan) => (
                 <div key={plan.id} className="p-6 rounded-2xl glass-panel space-y-4 border-slate-700/50">
@@ -296,51 +390,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
                     </div>
                   </div>
 
-                  <div className="pt-4 flex justify-end">
+                  <div className="pt-4 flex items-center justify-end">
                     <button
                       onClick={() => handleSavePlan(plan)}
                       disabled={isSaving}
-                      className="w-1/2 py-2 rounded-xl bg-cyan-500 text-slate-950 text-[10px] font-extrabold hover:bg-cyan-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                      className="px-5 py-2 rounded-lg bg-cyan-500 text-slate-950 text-xs font-extrabold hover:bg-cyan-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-md shadow-cyan-500/10"
                     >
-                      <Save className="w-3 h-3" />
-                      {isSaving ? 'Saving...' : 'ప్లాన్ సేవ్ చేయండి'}
+                      <Save className="w-3.5 h-3.5" />
+                      {isSaving ? 'Saving...' : 'సేవ్'}
                     </button>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Global Admin Access Toggle */}
-            {config && (
-              <div className="flex justify-end pt-4 gap-4 items-center">
-                <div className="text-right">
-                  <h4 className="text-xs font-bold text-white">అడ్మిన్ యాక్సెస్ (Admin Access)</h4>
-                  <p className="text-[10px] text-slate-500">పేమెంట్ లేకుండా టెస్టింగ్ కోసం ఉపయోగించండి.</p>
-                </div>
-                <button
-                  onClick={async () => {
-                    const newConfig = { ...config, isPaymentEnabled: !config.isPaymentEnabled };
-                    setConfig(newConfig);
-                    setIsSaving(true);
-                    try {
-                      await fetch('/api/admin/config', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ config: newConfig }),
-                      });
-                    } finally {
-                      setIsSaving(false);
-                    }
-                  }}
-                  className={`w-24 h-10 rounded-xl transition-all relative flex items-center px-1 ${config.isPaymentEnabled ? 'bg-slate-800' : 'bg-emerald-500 shadow-lg shadow-emerald-500/20'}`}
-                >
-                  <div className={`text-[10px] font-bold w-full text-center ${config.isPaymentEnabled ? 'text-slate-500' : 'text-white'}`}>
-                    {config.isPaymentEnabled ? 'OFF' : 'ON'}
-                  </div>
-                  <div className={`absolute w-8 h-8 rounded-lg bg-white transition-all shadow-md ${config.isPaymentEnabled ? 'left-1' : 'right-1'}`} />
-                </button>
-              </div>
-            )}
           </div>
         )}
 
@@ -359,11 +422,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-400 block mb-2">Hybrid Engine Version</label>
+                  <label className="text-xs font-bold text-slate-400 block mb-2">Hybrid Engine Status</label>
                   <input
                     type="text"
-                    value={config.hybridVersion}
-                    onChange={(e) => setConfig({ ...config, hybridVersion: e.target.value })}
+                    value={config.hybridEngineStatus}
+                    onChange={(e) => setConfig({ ...config, hybridEngineStatus: e.target.value })}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-500 cursor-not-allowed outline-none"
                     disabled
                   />
@@ -472,10 +535,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
               <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl">
                 <div className="flex items-center gap-2 text-amber-500 mb-1">
                   <ShieldAlert className="w-4 h-4" />
-                  <span className="text-[10px] font-bold uppercase">Hybrid Core Alert</span>
+                  <span className="text-[10px] font-bold uppercase">Hybrid Engine Alert</span>
                 </div>
                 <p className="text-[10px] text-amber-200/80 leading-relaxed">
-                  The PWA and TWA configurations are locked to the Hybrid Core version. Any manual changes to `vite.config.ts` or `assetlinks.json` require Admin Master PIN validation.
+                  The PWA and TWA configurations are locked to the Hybrid Engine. Any manual changes to `vite.config.ts` or `assetlinks.json` require Admin Master PIN validation.
                 </p>
               </div>
             </div>
@@ -572,7 +635,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
                     value={masterPin}
                     onChange={(e) => setMasterPin(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:border-cyan-500 outline-none font-mono"
-                    placeholder="6606"
+                    placeholder="6606.0k"
                   />
                 </div>
               </div>
