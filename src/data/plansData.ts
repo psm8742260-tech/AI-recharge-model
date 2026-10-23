@@ -32,7 +32,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     features: [
       '2 GB Total High-Speed AI Data Pack',
       '800 MB Daily High-Speed Usage Limit',
-      'Access to ALL 20 AI Models',
+      'Access to ALL 26 AI Models',
       'Instant Gateway Auto-Activation',
       'Reverse Proxy Gateway Access',
       'Live Token-to-MB Magic Receipts'
@@ -53,7 +53,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     features: [
       '5 GB Total High-Speed AI Data Pack',
       '1.2 GB Daily High-Speed Usage Limit',
-      'Access to ALL 20 AI Models',
+      'Access to ALL 26 AI Models',
       'Instant Gateway Auto-Activation',
       'Priority Gateway Bandwidth',
       'Live Token-to-MB Magic Receipts',
@@ -74,7 +74,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     features: [
       '10 GB Total High-Speed AI Data Pack',
       '2 GB Daily High-Speed Usage Limit',
-      'Access to ALL 20 AI Models (Including o1 & Opus)',
+      'Access to ALL 26 AI Models (Including o1, Opus & Brahmastra)',
       'Instant Gateway Auto-Activation',
       'Unlimited Key Regeneration',
       'Live Token-to-MB Magic Receipts',
@@ -105,5 +105,26 @@ export const TOP_UP_PACKS: TopUpPack[] = [
     priceINR: 179,
     dataMB: 1024,
     description: 'Instantly add 1 GB (1,024 MB) data pack for high-volume developer coding sessions.'
+  },
+  {
+    id: 'topup-2gb',
+    name: 'Power Booster Pack',
+    priceINR: 299,
+    dataMB: 2048,
+    description: 'Instantly add 2 GB (2,048 MB) turbo data pack for extended model execution.'
+  },
+  {
+    id: 'topup-5gb',
+    name: 'Ultra Data Vault',
+    priceINR: 599,
+    dataMB: 5120,
+    description: 'Instantly add 5 GB (5,120 MB) massive data reservoir for production workloads.'
+  },
+  {
+    id: 'topup-10gb',
+    name: 'Mega Cloud Pack',
+    priceINR: 999,
+    dataMB: 10240,
+    description: 'Instantly add 10 GB (10,240 MB) enterprise-grade AI tokens data allocation.'
   }
 ];

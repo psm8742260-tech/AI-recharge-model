@@ -3,6 +3,7 @@ export interface UserAccount {
   email: string;
   name: string;
   avatar: string;
+  mobile: string;
   activePlanId: string;
   activePlanName: string;
   planDurationMonths: number;

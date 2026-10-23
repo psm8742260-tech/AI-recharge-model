@@ -259,7 +259,7 @@ console.log('Magic Receipt:', data.magicReceipt);`;
               {isLoading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                  Routing Prompt via sk-airecharge Proxy...
+                  Routing Prompt via phrs-airecharge Proxy...
                 </>
               ) : (
                 <>

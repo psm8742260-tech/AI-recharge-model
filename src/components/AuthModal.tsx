@@ -1,6 +1,16 @@
 import React, { useState } from 'react';
-import { X, Bot, Mail, Lock, User, ShieldCheck, ArrowRight, Sparkles, ArrowLeft } from 'lucide-react';
+import { X, Bot, Mail, Lock, User, ShieldCheck, ArrowRight, Sparkles, ArrowLeft, Smartphone, Loader2 } from 'lucide-react';
 import { UserAccount } from '../types';
+
+export const GmailIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
+  <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M45 16.2L40 18.95L35 23.7V40H42C43.657 40 45 38.657 45 37V16.2Z" fill="#34A853"/>
+    <path d="M3 16.2L6.658 19.033L13 23.7V40H6C4.343 40 3 38.657 3 37V16.2Z" fill="#4285F4"/>
+    <path d="M35 11.2L24 19.45L13 11.2L12 17L13 23.7L24 31.95L35 23.7L36 17L35 11.2Z" fill="#EA4335"/>
+    <path d="M3 12.298V16.2L13 23.7V11.2L9.876 8.859C8.132 7.551 5.638 8.085 4.33 9.828C3.877 10.432 3.398 11.348 3 12.298Z" fill="#C5221F"/>
+    <path d="M45 12.298V16.2L35 23.7V11.2L38.124 8.859C39.868 7.551 42.362 8.085 43.67 9.828C44.123 10.432 44.602 11.348 45 12.298Z" fill="#FBBC04"/>
+  </svg>
+);
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -9,12 +19,24 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess }) => {
-  const [isUserMode, setIsUserMode] = useState(true);
+  const [isMobileInputActive, setIsMobileInputActive] = useState(false);
   const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
-  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Auto-submit mobile login when 10 digits are entered
+  React.useEffect(() => {
+    if (mobile.length === 10 && !isLoading) {
+      handleLogin(undefined, false);
+    }
+  }, [mobile]);
+
+  // Auto-submit email login when valid gmail is entered
+  React.useEffect(() => {
+    if (email.endsWith('@gmail.com') && email.length > 12 && !isLoading) {
+      handleLogin(undefined, true);
+    }
+  }, [email]);
 
   if (!isOpen) return null;
 
@@ -27,12 +49,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: isGoogle ? 'user@airecharge.com' : email,
-          name: isGoogle ? 'AI Developer' : name,
-          mobile: isGoogle ? '' : mobile,
-          password: isGoogle ? '' : password,
+          email: isGoogle ? email : (isMobileInputActive ? '' : email),
+          name: isGoogle ? 'User' : 'AI Developer',
+          mobile: isMobileInputActive ? mobile : '',
           provider: isGoogle ? 'google' : 'email',
-          isAdminRequest: !isGoogle // Mark if this is a manual admin attempt
+          isAdminRequest: false // Backend will auto-detect admin status now
         }),
       });
 
@@ -51,8 +72,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 sm:p-8 relative shadow-2xl space-y-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
+      <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-4 sm:p-6 relative shadow-2xl space-y-4 text-slate-900">
         
         {/* Back Button */}
         <button
@@ -64,152 +85,110 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
         </button>
 
         {/* Modal Brand Lockup */}
-        <div className="text-center space-y-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-400 to-emerald-400 p-0.5 mx-auto shadow-lg shadow-cyan-500/20">
-            <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
-              <Bot className="w-7 h-7 text-cyan-400" />
+        <div className="text-center space-y-4">
+          <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl bg-gradient-to-tr from-cyan-400 via-sky-400 to-emerald-400 p-0.5 mx-auto shadow-2xl shadow-cyan-500/25 overflow-hidden">
+            <div className="w-full h-full bg-slate-950 rounded-[22px] flex items-center justify-center overflow-hidden">
+              <img src="/app_logo.png" alt="Logo" className="w-full h-full object-cover" />
             </div>
           </div>
 
           <div>
-            <h2 className="text-2xl font-extrabold text-white">
-              {isUserMode ? 'User Login' : 'Master Admin Login'}
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight mt-2">
+              AI RECHARGE MODELS
             </h2>
-            <p className="text-xs text-slate-400 mt-1">
-              {isUserMode 
-                ? 'Access 20 AI Models with prepaid data packs.' 
-                : 'Enter admin credentials to access master control.'}
+          </div>
+        </div>
+
+        {/* UNIFIED LOGIN: DYNAMIC GMAIL OR MOBILE INPUT */}
+        <div className="space-y-4 py-2">
+          <div className="relative group">
+            {!isMobileInputActive ? (
+              <div className="space-y-2">
+                <div className="relative">
+                  {/* Left: Gmail Icon */}
+                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center">
+                    <GmailIcon className="w-6 h-6 shrink-0" />
+                  </div>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter Gmail Address"
+                    className="w-full bg-slate-950 border-2 border-cyan-500/30 rounded-xl pl-12 pr-12 py-3 text-sm font-bold text-white placeholder-slate-400 focus:outline-none focus:border-cyan-400 shadow-lg transition-colors"
+                  />
+                  {/* Right: Loading Icon */}
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center">
+                    <Loader2 className={`w-5 h-5 text-cyan-400 ${isLoading ? 'animate-spin' : 'animate-[spin_4s_linear_infinite] opacity-75'}`} />
+                  </div>
+                </div>
+                <p className="text-[10px] text-center text-slate-600 font-medium">
+                  జిమెయిల్ ఐడి టైప్ చేయగానే ఆటోమేటిక్‌గా వెరిఫై అవుతుంది
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="relative">
+                  {/* Left: Mobile Icon */}
+                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center">
+                    <Smartphone className="w-5 h-5 text-cyan-400 shrink-0" />
+                  </div>
+                  <input
+                    type="tel"
+                    autoFocus
+                    required
+                    value={mobile}
+                    onChange={(e) => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    placeholder="Enter 10-digit Mobile Number"
+                    className="w-full bg-slate-950 border-2 border-cyan-500/50 rounded-xl pl-12 pr-12 py-3 text-sm text-center font-black tracking-[0.2em] text-cyan-400 placeholder-slate-500 focus:outline-none focus:border-cyan-400 shadow-lg shadow-cyan-500/10"
+                  />
+                  {/* Right: Loading Icon */}
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center">
+                    <Loader2 className={`w-5 h-5 text-cyan-400 ${isLoading ? 'animate-spin' : 'animate-[spin_4s_linear_infinite] opacity-75'}`} />
+                  </div>
+                </div>
+                <p className="text-[10px] text-center text-cyan-600 font-bold uppercase tracking-widest">
+                  Auto-verifying number...
+                </p>
+              </div>
+            )}
+          </div>
+          
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-full flex items-center gap-4">
+              <div className="h-px bg-slate-200 flex-1"></div>
+              <button
+                onClick={() => {
+                  setIsMobileInputActive(!isMobileInputActive);
+                  setMobile('');
+                  setEmail('');
+                }}
+                className="w-11 h-11 rounded-2xl bg-slate-950 border-2 border-cyan-500/40 hover:border-cyan-400 flex items-center justify-center text-cyan-400 hover:text-cyan-300 transition-all shadow-xl shadow-cyan-500/15 group cursor-pointer"
+                title={isMobileInputActive ? 'Switch to Gmail Login' : 'Switch to Mobile Login'}
+              >
+                {isMobileInputActive ? (
+                  <GmailIcon className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                ) : (
+                  <Smartphone className="w-6 h-6 group-hover:scale-110 transition-transform text-cyan-400" />
+                )}
+              </button>
+              <div className="h-px bg-slate-200 flex-1"></div>
+            </div>
+
+            <p className="text-[11px] text-center text-slate-600 font-semibold flex items-center gap-1.5 justify-center">
+              {isMobileInputActive ? (
+                <>
+                  <GmailIcon className="w-4 h-4 inline shrink-0" />
+                  <span>జిమెయిల్ ద్వారా లాగిన్ అవ్వడానికి ఐకాన్ క్లిక్ చేయండి</span>
+                </>
+              ) : (
+                <>
+                  <Smartphone className="w-4 h-4 inline text-cyan-600 shrink-0" />
+                  <span>మొబైల్ నంబర్ తో లాగిన్ అవ్వడానికి ఐకాన్ క్లిక్ చేయండి</span>
+                </>
+              )}
             </p>
           </div>
-        </div>
-
-        {isUserMode ? (
-          /* USER MODE: ONLY GOOGLE LOGIN */
-          <div className="space-y-6 py-4">
-            <button
-              type="button"
-              onClick={() => handleLogin(undefined, true)}
-              disabled={isLoading}
-              className="w-full py-4 px-4 rounded-xl bg-slate-950 hover:bg-slate-850 border border-slate-800 text-slate-100 font-bold text-sm transition-all flex items-center justify-center gap-3 cursor-pointer shadow-xl"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path
-                  fill="#EA4335"
-                  d="M12 5c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                />
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-              </svg>
-              Sign in with Google
-            </button>
-            <div className="text-center">
-               <p className="text-[11px] text-slate-500">Fast & Secure Automatic Login</p>
-            </div>
-          </div>
-        ) : (
-          /* ADMIN MODE: MANUAL FORM */
-          <form onSubmit={(e) => handleLogin(e, false)} className="space-y-4">
-            <div>
-              <label className="text-xs font-bold text-slate-300 block mb-1">
-                Admin Full Name
-              </label>
-              <div className="relative">
-                <User className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Master Admin"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-cyan-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-slate-300 block mb-1">
-                Admin Email Address
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@airecharge.com"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-cyan-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-slate-300 block mb-1">
-                Admin Mobile Number
-              </label>
-              <div className="relative">
-                <ShieldCheck className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="tel"
-                  required
-                  value={mobile}
-                  onChange={(e) => setMobile(e.target.value)}
-                  placeholder="8466062260"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-cyan-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-slate-300 block mb-1">
-                Master Password
-              </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-cyan-500"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 text-slate-950 font-extrabold text-xs hover:brightness-110 transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2 cursor-pointer"
-            >
-              {isLoading ? 'Verifying Admin...' : 'Log In to Admin Panel'}
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </form>
-        )}
-
-        {/* Mode Toggle */}
-        <div className="pt-2 border-t border-slate-800 flex justify-center">
-          <button
-            onClick={() => setIsUserMode(!isUserMode)}
-            className="text-[11px] font-bold text-cyan-400 hover:text-cyan-300 transition-colors uppercase tracking-wider"
-          >
-            {isUserMode ? 'Switch to Master Admin Access' : 'Switch to Regular User Login'}
-          </button>
-        </div>
-
-        <div className="text-[10px] text-center text-slate-600">
-          By continuing, you agree to AI Recharge Terms & Reverse Proxy Usage Rules.
         </div>
 
       </div>

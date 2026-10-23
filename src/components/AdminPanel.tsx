@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Zap, Sparkles, Settings, Database, Activity, Save, Plus, Trash2, ShieldAlert, Cpu, ShieldCheck, ArrowLeft } from 'lucide-react';
+import { Shield, Zap, Sparkles, Settings, Database, Activity, Save, Plus, Trash2, ShieldAlert, Cpu, ShieldCheck, ArrowLeft, CreditCard, QrCode, Upload } from 'lucide-react';
 import { SubscriptionPlan, TopUpPack } from '../data/plansData';
 import { UserAccount } from '../types';
+
+import { getDisplayVersion } from '../version';
 
 interface AdminPanelProps {
   user: UserAccount | null;
@@ -17,6 +19,8 @@ interface AdminConfig {
   hybridEngineStatus: string;
   adminEmail: string;
   masterPin?: string;
+  upiId?: string;
+  qrCodeUrl?: string;
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack }) => {
@@ -46,6 +50,32 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack }) => {
   const [adminMobile, setAdminMobile] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [masterPin, setMasterPin] = useState('');
+
+  // QR Code File Upload Ref & Handler
+  const qrFileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleQrImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('దయచేసి సరైన ఫోటో లేదా ఇమేజ్ ఫైల్ మాత్రమే ఎంచుకోండి (Please select a valid image file).');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert('ఇమేజ్ సైజు 10MB కంటే తక్కువగా ఉండాలి (Image size must be under 10MB).');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string' && config) {
+        setConfig({ ...config, qrCodeUrl: reader.result });
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   useEffect(() => {
     fetchAdminData();
@@ -216,7 +246,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack }) => {
         <div className="flex items-center gap-2">
           <div className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-[10px] font-bold text-slate-400 flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            HYBRID ENGINE & PWA
+            {getDisplayVersion()}
           </div>
         </div>
       </div>
@@ -265,6 +295,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack }) => {
             activeTab === 4 ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/20' : 'text-slate-400 hover:text-white'
           }`}
         >
+          <CreditCard className="w-4 h-4" />
+          Payment Config
+        </button>
+        <button
+          onClick={() => setActiveTab(5)}
+          className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2 whitespace-nowrap ${
+            activeTab === 5 ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/20' : 'text-slate-400 hover:text-white'
+          }`}
+        >
           <ShieldAlert className="w-4 h-4" />
           Security
         </button>
@@ -275,58 +314,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack }) => {
         {/* Tab 0: Recharge Management */}
         {activeTab === 0 && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Global Payment Section Admin Control */}
-            {config && (
-              <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
-                    config.isPaymentEnabled
-                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                      : 'bg-rose-500/10 border-rose-500/30 text-rose-400'
-                  }`}>
-                    <ShieldCheck className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                      పేమెంట్ సెక్షన్ అడ్మిన్ కంట్రోల్ (అడ్మిన్ యాక్సెస్)
-                    </h4>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      గ్లోబల్‌గా రీఛార్జ్ మరియు సబ్‌స్క్రిప్షన్ ప్లాన్‌ల పేమెంట్ యాక్సెస్‌ను ఆన్ లేదా ఆఫ్ చేయండి.
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={async () => {
-                    const pin = prompt('మాస్టర్ పిన్ ఎంటర్ చేయండి (Master PIN):');
-                    if (pin !== '6606.0k' && pin !== '6606.ok' && pin !== config.masterPin) {
-                      alert('తప్పు మాస్టర్ పిన్! (Invalid Master PIN)');
-                      return;
-                    }
-                    const newConfig = { ...config, isPaymentEnabled: !config.isPaymentEnabled };
-                    setConfig(newConfig);
-                    setIsSaving(true);
-                    try {
-                      await fetch('/api/admin/config', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ config: newConfig }),
-                      });
-                      alert(`అడ్మిన్ యాక్సెస్ విజయవంతంగా ${newConfig.isPaymentEnabled ? 'ఆన్' : 'ఆఫ్'} చేయబడింది!`);
-                    } finally {
-                      setIsSaving(false);
-                    }
-                  }}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 border shadow-lg ${
-                    config.isPaymentEnabled
-                      ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/30'
-                      : 'bg-rose-500/20 border-rose-500/50 text-rose-400 hover:bg-rose-500/30'
-                  }`}
-                >
-                  <ShieldCheck className={`w-4 h-4 ${config.isPaymentEnabled ? 'animate-pulse' : ''}`} />
-                  అడ్మిన్ యాక్సెస్ {config.isPaymentEnabled ? 'ఆన్' : 'ఆఫ్'}
-                </button>
-              </div>
-            )}
+
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {plans.map((plan) => (
@@ -369,22 +357,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack }) => {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">అదనపు ఫీల్డ్ 1 (Field 1)</label>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">మొత్తం రిక్వెస్ట్లు (Total Requests)</label>
                       <input
                         type="text"
                         value={plan.customField1 || ''}
                         onChange={(e) => updatePlan(plan.id, 'customField1', e.target.value)}
-                        placeholder="భవిష్యత్తు అవసరాల కోసం..."
+                        placeholder="ఉదా: 5000"
                         className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white focus:border-cyan-500 outline-none"
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">అదనపు ఫీల్డ్ 2 (Field 2)</label>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">రిక్వెస్ట్ కి అక్షరాలు (Chars per Request)</label>
                       <input
                         type="text"
                         value={plan.customField2 || ''}
                         onChange={(e) => updatePlan(plan.id, 'customField2', e.target.value)}
-                        placeholder="భవిష్యత్తు అవసరాల కోసం..."
+                        placeholder="ఉదా: 4 సంఖ్యలు"
                         className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white focus:border-cyan-500 outline-none"
                       />
                     </div>
@@ -590,8 +578,201 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack }) => {
           </div>
         )}
 
-        {/* Tab 4: Security */}
-        {activeTab === 4 && (
+        {/* Tab 4: Payment Config */}
+        {activeTab === 4 && config && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* QR Code & UPI Config */}
+            <div className="p-6 rounded-2xl glass-panel space-y-6 border-slate-700/50 max-w-2xl">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+                <QrCode className="w-4 h-4 text-cyan-400" />
+                QR Code & UPI Gateway Settings
+              </h3>
+              <div className="grid grid-cols-1 gap-6">
+                <div>
+                  <label className="text-xs font-bold text-slate-400 block mb-1.5">UPI ID (psm8742260@upi)</label>
+                  <input
+                    type="text"
+                    value={config.upiId || ''}
+                    onChange={(e) => setConfig({ ...config, upiId: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:border-cyan-500 outline-none font-mono"
+                  />
+                </div>
+
+                {/* Square QR Code Board */}
+                <div className="space-y-4">
+                  <label className="text-xs font-bold text-slate-400 block">
+                    QR Code Gateway Board
+                  </label>
+                  
+                  <div className="flex flex-col items-center justify-center">
+                    {/* Square Preview Board */}
+                    <div 
+                      onClick={() => qrFileInputRef.current?.click()}
+                      className="w-48 h-48 sm:w-52 sm:h-52 shrink-0 bg-slate-950 border-2 border-dashed border-cyan-500/40 rounded-2xl p-2.5 flex flex-col items-center justify-center relative cursor-pointer hover:border-cyan-400 transition-all group overflow-hidden shadow-xl shadow-cyan-950/20"
+                    >
+                      {config.qrCodeUrl ? (
+                        <>
+                          <img 
+                            src={config.qrCodeUrl} 
+                            alt="QR Code Preview" 
+                            className="w-full h-full object-contain rounded-xl bg-white p-1"
+                          />
+                          <div className="absolute inset-0 bg-slate-950/75 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center rounded-2xl">
+                            <Upload className="w-5 h-5 text-cyan-400 mb-1" />
+                            <span className="text-[10px] font-bold text-white">Change QR</span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center text-center p-3">
+                          <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                            <QrCode className="w-5 h-5 text-cyan-400" />
+                          </div>
+                          <span className="text-xs font-bold text-slate-300">QR Board</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {config.qrCodeUrl && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setConfig({ ...config, qrCodeUrl: '' });
+                        }}
+                        className="text-[10px] text-rose-400 hover:text-rose-300 underline font-semibold cursor-pointer mt-3"
+                      >
+                        Remove QR
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Hidden File Input for QR Code Image */}
+              <input
+                type="file"
+                ref={qrFileInputRef}
+                accept="image/*"
+                onChange={handleQrImageUpload}
+                className="hidden"
+              />
+
+              {/* Buttons Row: Three small side-by-side buttons */}
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => qrFileInputRef.current?.click()}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-cyan-500/30 text-[10px] font-black hover:border-cyan-400 transition-all flex items-center gap-1.5 cursor-pointer shadow-md"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  UPLOAD QR
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveConfig}
+                  disabled={isSaving}
+                  className="px-3 py-1.5 rounded-lg bg-cyan-500 text-slate-950 text-[10px] font-black hover:bg-cyan-400 transition-all flex items-center gap-1.5 cursor-pointer shadow-md shadow-cyan-500/10 disabled:opacity-50"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  {isSaving ? 'SAVING...' : 'SAVE GATEWAY'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (config) {
+                      setConfig({ ...config, qrCodeUrl: '' });
+                    }
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[10px] font-black hover:border-rose-400 transition-all flex items-center gap-1.5 cursor-pointer shadow-md"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  DELETE QR
+                </button>
+              </div>
+            </div>
+
+            {/* Dynamic Data Pack Management Cards - Exactly 5 Boards */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
+                  <Database className="w-4 h-4 text-emerald-400" />
+                  Data Pack Inventory Management ({topups.length} Boards)
+                </h3>
+                <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
+                  మొత్తం 5 డేటా బోర్డులు
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {topups.map((tp, idx) => (
+                  <div key={tp.id} className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between hover:border-emerald-500/30 transition-all group">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 text-[10px] font-black border border-emerald-500/20 uppercase font-mono">
+                          Board #{tp.id.replace('topup-', '').toUpperCase()}
+                        </span>
+                        <Zap className="w-4 h-4 text-emerald-500" />
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Pack Name</label>
+                          <input 
+                            type="text" 
+                            value={tp.name} 
+                            onChange={(e) => setTopups(prev => prev.map(p => p.id === tp.id ? { ...p, name: e.target.value } : p))}
+                            className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:border-emerald-500 outline-none"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Price (₹)</label>
+                            <input 
+                              type="number" 
+                              value={tp.priceINR} 
+                              onChange={(e) => setTopups(prev => prev.map(p => p.id === tp.id ? { ...p, priceINR: parseInt(e.target.value) || 0 } : p))}
+                              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-emerald-400 font-bold outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Data (MB)</label>
+                            <input 
+                              type="number" 
+                              value={tp.dataMB} 
+                              onChange={(e) => setTopups(prev => prev.map(p => p.id === tp.id ? { ...p, dataMB: parseInt(e.target.value) || 0 } : p))}
+                              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-cyan-400 font-bold outline-none"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        setIsSaving(true);
+                        try {
+                          await fetch('/api/admin/plans', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ topups }),
+                          });
+                          alert('డేటా ప్యాక్ విజయవంతంగా సేవ్ చేయబడింది! (Data Pack Saved!)');
+                        } finally {
+                          setIsSaving(false);
+                        }
+                      }}
+                      className="w-full mt-6 py-2.5 rounded-xl bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 text-slate-300 text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2 border border-slate-700/50 cursor-pointer"
+                    >
+                      <Save className="w-3.5 h-3.5" />
+                      Feed & Save
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tab 5: Security */}
+        {activeTab === 5 && (
           <div className="max-w-xl space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="p-6 rounded-2xl glass-panel space-y-6 border-slate-700/50">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
@@ -640,14 +821,40 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack }) => {
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-800 flex justify-end">
+              <div className="pt-4 border-t border-slate-800 flex items-center justify-end gap-3">
+                {config && (
+                  <button
+                    onClick={async () => {
+                      const newConfig = { ...config, isPaymentEnabled: !config.isPaymentEnabled };
+                      setConfig(newConfig);
+                      setIsSaving(true);
+                      try {
+                        await fetch('/api/admin/config', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ config: newConfig }),
+                        });
+                      } finally {
+                        setIsSaving(false);
+                      }
+                    }}
+                    className={`px-4 py-2 rounded-lg text-[10px] font-black transition-all flex items-center gap-1.5 border shadow-md ${
+                      config.isPaymentEnabled
+                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
+                        : 'bg-rose-500/10 border-rose-500/30 text-rose-400 hover:bg-rose-500/20'
+                    }`}
+                  >
+                    <ShieldCheck className={`w-3.5 h-3.5 ${config.isPaymentEnabled ? 'animate-pulse' : ''}`} />
+                    ACCESS: {config.isPaymentEnabled ? 'ON' : 'OFF'}
+                  </button>
+                )}
                 <button
                   onClick={handleSaveSecurity}
                   disabled={isSaving}
-                  className="px-6 py-2.5 rounded-xl bg-red-500 text-white text-xs font-extrabold hover:bg-red-400 transition-all flex items-center gap-2 disabled:opacity-50"
+                  className="px-4 py-2 rounded-lg bg-red-500 text-white text-[10px] font-black hover:bg-red-400 transition-all flex items-center gap-1.5 disabled:opacity-50 shadow-md"
                 >
-                  <ShieldCheck className="w-4 h-4" />
-                  {isSaving ? 'Updating Security...' : 'Update Admin Credentials'}
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  {isSaving ? 'UPDATING...' : 'UPDATE ADMIN'}
                 </button>
               </div>
             </div>

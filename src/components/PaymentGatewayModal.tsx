@@ -44,6 +44,7 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [generatedApiKey, setGeneratedApiKey] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
 
   // Every time modal opens, ALWAYS reset to Board 1
   useEffect(() => {
@@ -66,6 +67,10 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
       if (data.topups && data.topups.length > 0) {
         setTopups(data.topups);
         setSelectedTopUp(data.topups[0]);
+      }
+      if (data.config) {
+        if (data.config.upiId) setUpiId(data.config.upiId);
+        if (data.config.qrCodeUrl) setQrCodeUrl(data.config.qrCodeUrl);
       }
     } catch (err) {
       console.error('Failed to fetch plans config:', err);
@@ -160,7 +165,7 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
                 Select Subscription Plan
               </h2>
               <p className="text-xs text-slate-400 mt-1">
-                Choose your quota duration to unlock <span className="text-cyan-400 font-bold">ALL 20 AI Models</span> with high-speed proxy gateway.
+                Choose your quota duration to unlock <span className="text-cyan-400 font-bold">ALL 26 AI Models & Agents</span> with high-speed proxy gateway.
               </p>
 
               {/* Sub-tabs: Plans vs Topups */}
@@ -233,6 +238,18 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
                           <span>Daily Limit:</span>
                           <span className="font-bold text-emerald-400 font-mono">{plan.dailyLimitMB} MB/day</span>
                         </div>
+                        {plan.customField1 && (
+                          <div className="flex items-center justify-between text-slate-300 border-t border-slate-800 pt-1 mt-1">
+                            <span>Total Requests:</span>
+                            <span className="font-bold text-cyan-400 font-mono">{plan.customField1}</span>
+                          </div>
+                        )}
+                        {plan.customField2 && (
+                          <div className="flex items-center justify-between text-slate-300">
+                            <span>Chars/Request:</span>
+                            <span className="font-bold text-cyan-400 font-mono">{plan.customField2}</span>
+                          </div>
+                        )}
                       </div>
 
                       <ul className="space-y-1.5 pt-2">
@@ -364,21 +381,25 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
                 </span>
               </div>
 
-              {/* QR Code Canvas Box */}
-              <div className="w-56 h-56 mx-auto bg-white p-3 rounded-2xl shadow-xl flex items-center justify-center border-2 border-cyan-400/60">
-                <div className="w-full h-full border-4 border-slate-900 rounded-xl p-2.5 flex flex-col justify-between bg-slate-50 relative">
-                  <div className="flex justify-between">
-                    <div className="w-10 h-10 bg-slate-900 rounded-lg"></div>
-                    <div className="w-8 h-8 bg-slate-900 rounded-lg"></div>
+              {/* QR Code Canvas Box or Dynamic Image */}
+              <div className="w-56 h-56 mx-auto bg-white p-2 rounded-2xl shadow-xl flex items-center justify-center border-2 border-cyan-400/60 overflow-hidden">
+                {qrCodeUrl ? (
+                  <img src={qrCodeUrl} alt="UPI QR" className="w-full h-full object-contain" />
+                ) : (
+                  <div className="w-full h-full border-4 border-slate-900 rounded-xl p-2.5 flex flex-col justify-between bg-slate-50 relative">
+                    <div className="flex justify-between">
+                      <div className="w-10 h-10 bg-slate-900 rounded-lg"></div>
+                      <div className="w-8 h-8 bg-slate-900 rounded-lg"></div>
+                    </div>
+                    <div className="text-center font-mono font-black text-slate-900 text-xs tracking-tight py-1 bg-cyan-100 rounded border border-cyan-300">
+                      SCAN & PAY ₹{activeTab === 'plans' ? selectedPlan.priceINR : selectedTopUp.priceINR}
+                    </div>
+                    <div className="flex justify-between items-end">
+                      <div className="w-8 h-8 bg-slate-900 rounded-lg"></div>
+                      <div className="w-10 h-10 bg-slate-900 rounded-lg"></div>
+                    </div>
                   </div>
-                  <div className="text-center font-mono font-black text-slate-900 text-xs tracking-tight py-1 bg-cyan-100 rounded border border-cyan-300">
-                    SCAN & PAY ₹{activeTab === 'plans' ? selectedPlan.priceINR : selectedTopUp.priceINR}
-                  </div>
-                  <div className="flex justify-between items-end">
-                    <div className="w-8 h-8 bg-slate-900 rounded-lg"></div>
-                    <div className="w-10 h-10 bg-slate-900 rounded-lg"></div>
-                  </div>
-                </div>
+                )}
               </div>
 
               <div className="space-y-1">
@@ -458,7 +479,7 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
                 Your phrs- API Key is Ready!
               </h2>
               <p className="text-xs text-slate-300 max-w-md mx-auto">
-                Data pack balance is now updated to your account. Use this key to route requests to all 20 AI models.
+                Data pack balance is now updated to your account. Use this key to route requests to all 26 AI models & agents.
               </p>
             </div>
 

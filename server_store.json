@@ -148,6 +148,27 @@
       "priceINR": 179,
       "dataMB": 1024,
       "description": "Instantly add 1 GB (1,024 MB) data pack for high-volume developer coding sessions."
+    },
+    {
+      "id": "topup-2gb",
+      "name": "Power Booster Pack",
+      "priceINR": 299,
+      "dataMB": 2048,
+      "description": "Instantly add 2 GB (2,048 MB) turbo data pack for extended model execution."
+    },
+    {
+      "id": "topup-5gb",
+      "name": "Ultra Data Vault",
+      "priceINR": 599,
+      "dataMB": 5120,
+      "description": "Instantly add 5 GB (5,120 MB) massive data reservoir for production workloads."
+    },
+    {
+      "id": "topup-10gb",
+      "name": "Mega Cloud Pack",
+      "priceINR": 999,
+      "dataMB": 10240,
+      "description": "Instantly add 10 GB (10,240 MB) enterprise-grade AI tokens data allocation."
     }
   ],
   "systemConfig": {

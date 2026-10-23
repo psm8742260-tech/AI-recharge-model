@@ -3,9 +3,9 @@
 @layer base {
   body {
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background-color: #0f172a;
-    background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 80%);
-    color: #f8fafc;
+    background-color: #f2d8dd;
+    background-image: radial-gradient(circle at 50% 0%, #fbe7ea 0%, #f2d8dd 80%);
+    color: #1e293b;
     min-height: 100vh;
   }
   code, pre, .font-mono {
@@ -15,9 +15,10 @@
 
 /* Custom glow utility and glassmorphism card styles */
 .glass-panel {
-  background: rgba(15, 23, 42, 0.75);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 4px 20px rgba(150, 50, 70, 0.05);
 }
 
 .glass-panel-hover {
@@ -25,9 +26,9 @@
 }
 
 .glass-panel-hover:hover {
-  background: rgba(30, 41, 59, 0.85);
-  border-color: rgba(56, 189, 248, 0.3);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(56, 189, 248, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(2, 132, 199, 0.4);
+  box-shadow: 0 8px 30px rgba(150, 50, 70, 0.1), 0 0 20px rgba(2, 132, 199, 0.1);
 }
 
 .glow-cyan {

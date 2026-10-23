@@ -1,7 +1,7 @@
 export interface AIModel {
   id: string;
   name: string;
-  provider: 'DeepSeek' | 'Google' | 'Anthropic' | 'OpenAI' | 'Meta' | 'Mistral' | 'xAI' | 'Cohere' | 'Perplexity' | 'Flux';
+  provider: 'DeepSeek' | 'Google' | 'Anthropic' | 'OpenAI' | 'Meta' | 'Mistral' | 'xAI' | 'Cohere' | 'Perplexity' | 'Flux' | 'Brahmastra';
   providerLogo: string;
   category: 'Reasoning' | 'Coding' | 'Fast Chat' | 'Multimodal' | 'Search & RAG';
   contextWindow: string; // e.g. "128K", "2M"
@@ -367,5 +367,46 @@ export const AI_MODELS: AIModel[] = [
     description: 'Flux Pro 1.1 generates stunning visual assets, UI mocks, and photorealistic imagery directly through prompt tokens.',
     capabilities: ['Text-to-Image', 'UI Mockup Generation', 'High Fidelity', 'Prompt Adherence'],
     recommendedPack: '3 Months (10 GB)'
-  }
+  },
+
+
+  {
+    id: 'brahmastra-3-5-pro',
+    name: 'Brahmastra 3.5 Pro',
+    provider: 'Brahmastra',
+    providerLogo: '🏛️',
+    category: 'Coding',
+    contextWindow: '1M Tokens',
+    tokensPerMB: 20000,
+    speedRating: 99,
+    reasoningScore: 100,
+    codingScore: 100,
+    costPer1kTokensInMB: 0.050,
+    tagline: '21-in-1 Supreme Autonomous AI Master Engine & Mega-Fusion Protocol.',
+    description: 'Brahmastra 3.5 Pro fuses the capabilities of Google, DeepSeek, Anthropic, OpenAI, and Meta into an unbeatable autonomous master coding engine.',
+    capabilities: ['21-in-1 Mega Fusion', 'Supreme Autonomous', 'Full-Stack Weaving', 'Zero-Bug Engine'],
+    recommendedPack: '3 Months (10 GB)',
+    badge: 'Supreme Fusion'
+  },
+  {
+    id: 'chatgpt-agent',
+    name: 'ChatGPT Agent',
+    provider: 'OpenAI',
+    providerLogo: '🤖',
+    category: 'Fast Chat',
+    contextWindow: '128K Tokens',
+    tokensPerMB: 26000,
+    speedRating: 99,
+    reasoningScore: 98,
+    codingScore: 97,
+    costPer1kTokensInMB: 0.038,
+    tagline: 'OpenAI official ChatGPT Agent with live web reasoning & agentic execution.',
+    description: 'ChatGPT Agent delivers state-of-the-art conversational intelligence, multimodal analysis, autonomous multi-step tool execution, and fluent multilingual mastery across Telugu and global languages.',
+    capabilities: ['Autonomous Agent', 'Fluent Multilingual', 'Live Web & Code', 'Workflow Automation'],
+    recommendedPack: '2 Months (5 GB)',
+    badge: 'ChatGPT Flagship'
+  },
+
+
 ];
+

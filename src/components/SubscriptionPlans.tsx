@@ -62,6 +62,18 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({ onOpenRech
                   <span className="text-xs text-slate-400">డైలీ లిమిట్:</span>
                   <span className="text-sm font-bold text-emerald-400 font-mono">{plan.dailyLimitMB} MB</span>
                 </div>
+                {plan.customField1 && (
+                  <div className="flex items-center justify-between border-t border-slate-800 pt-2">
+                    <span className="text-xs text-slate-400">మొత్తం రిక్వెస్ట్లు:</span>
+                    <span className="text-sm font-bold text-cyan-400 font-mono">{plan.customField1}</span>
+                  </div>
+                )}
+                {plan.customField2 && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-400">రిక్వెస్ట్ కి అక్షరాలు:</span>
+                    <span className="text-sm font-bold text-cyan-400 font-mono">{plan.customField2}</span>
+                  </div>
+                )}
               </div>
 
               <ul className="space-y-3">

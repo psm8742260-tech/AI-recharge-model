@@ -1,6 +1,17 @@
 import React, { useState } from 'react';
 import { AIModel } from '../data/modelsData';
+import { 
+  Kalachakrastra64Icon, 
+  SudarshanaChakraIcon, 
+  ChilipiIcon,
+  BrahmastraUltraIcon,
+  ChatGPTIcon,
+  GarudastraIcon,
+  AgneyastraIcon
+} from './Kalachakrastra64Icon';
 import { X, Zap, BrainCircuit, Code2, Copy, Check, Terminal, ShieldCheck, Sparkles, Cpu, ArrowLeft } from 'lucide-react';
+
+import { getDisplayVersion } from '../version';
 
 interface ModelDetailModalProps {
   model: AIModel | null;
@@ -48,8 +59,24 @@ export const ModelDetailModal: React.FC<ModelDetailModalProps> = ({
 
         {/* Model Header */}
         <div className="flex items-start gap-4 pt-8">
-          <div className="w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-xl shrink-0">
-            {model.providerLogo}
+          <div className="w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-xl shrink-0 overflow-hidden">
+            {model.id === 'kalachakrastra-64-pro' ? (
+              <Kalachakrastra64Icon className="w-8 h-8" />
+            ) : model.id === 'brahmastra-3-5-pro' ? (
+              <SudarshanaChakraIcon className="w-8 h-8" />
+            ) : model.id === 'chilipi-3-5-lite' ? (
+              <ChilipiIcon className="w-8 h-8" />
+            ) : model.id === 'chatgpt-agent' ? (
+              <ChatGPTIcon className="w-8 h-8" />
+            ) : model.id === 'brahmastra-3-5-ultra' ? (
+              <BrahmastraUltraIcon className="w-8 h-8" />
+            ) : model.id === 'garudastra-pro' ? (
+              <GarudastraIcon className="w-8 h-8" />
+            ) : model.id === 'agneyastra-ultra' ? (
+              <AgneyastraIcon className="w-8 h-8" />
+            ) : (
+              model.providerLogo
+            )}
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -71,7 +98,7 @@ export const ModelDetailModal: React.FC<ModelDetailModalProps> = ({
         <div className="space-y-1">
           <div className="flex items-center justify-between px-1">
             <span className="text-[8px] font-bold text-emerald-400 uppercase tracking-tighter">Hybrid AI Engine Verified</span>
-            <span className="text-[8px] text-slate-500 font-mono">v4.0.2</span>
+            <span className="text-[8px] text-slate-500 font-mono">{getDisplayVersion()}</span>
           </div>
           <div className="grid grid-cols-3 gap-0.5 p-0.5 rounded-lg bg-emerald-500/5 border border-emerald-500/40 h-[36px] items-center">
             <div className="text-center min-w-0">

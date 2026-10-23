@@ -1,4 +1,5 @@
 import React from 'react';
+import { AI_MODELS } from '../data/modelsData';
 import { Bot, Zap, ShieldCheck, Key, ArrowRight, Sparkles, CheckCircle2, Cpu, Receipt } from 'lucide-react';
 
 interface LandingHeroProps {
@@ -24,7 +25,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
           <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
             AI Data Packs for{' '}
             <span className="bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">
-              20 Top Models
+              {AI_MODELS.length} Top Models
             </span>
           </h1>
 

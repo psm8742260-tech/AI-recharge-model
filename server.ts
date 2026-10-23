@@ -8,9 +8,10 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
+const PORT = process.env.NODE_ENV === 'production' ? (parseInt(process.env.PORT || '8080', 10)) : 3000;
 
-app.use(express.json());
+app.use(express.json({ limit: '15mb' }));
+app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
 // Initialize GoogleGenAI server-side SDK
 const ai = new GoogleGenAI({
@@ -123,7 +124,9 @@ let store = {
     masterPin: '6606.0k',
     authorizedAdminEmails: ['psm8742260@gmail.com'],
     authorizedAdminMobiles: ['8466062260'],
-    isPaymentEnabled: true
+    isPaymentEnabled: true,
+    upiId: 'psm8742260@upi',
+    qrCodeUrl: ''
   }
 };
 
@@ -134,7 +137,18 @@ function loadStore() {
       const raw = fs.readFileSync(DB_FILE, 'utf-8');
       const parsed = JSON.parse(raw);
       // Merge with defaults to ensure new fields exist
-      store = { ...store, ...parsed };
+      store = { 
+        ...store, 
+        ...parsed,
+        systemConfig: { ...store.systemConfig, ...(parsed.systemConfig || {}) }
+      };
+      
+      if (!store.topups || store.topups.length < 5) {
+        const existingIds = new Set((store.topups || []).map((t: any) => t.id));
+        const missing = TOP_UP_PACKS.filter((t) => !existingIds.has(t.id));
+        store.topups = [...(store.topups || []), ...missing];
+        saveStore();
+      }
     } else {
       saveStore();
     }
@@ -286,22 +300,13 @@ app.get('/api/user/me', (req: Request, res: Response) => {
 app.post('/api/auth/login', (req: Request, res: Response) => {
   const { email, name, provider, password, mobile, isAdminRequest } = req.body;
   
-  let isFinalAdmin = false;
-
-  // Manual Admin Login Path
-  if (isAdminRequest) {
-    const isAuthorizedEmail = store.systemConfig.authorizedAdminEmails.includes(email);
-    const isAuthorizedMobile = store.systemConfig.authorizedAdminMobiles.includes(mobile);
-    const isCorrectPassword = password === store.systemConfig.adminPassword;
-
-    if (!isAuthorizedEmail || !isAuthorizedMobile || !isCorrectPassword) {
-      return res.status(401).json({ success: false, message: 'Invalid Admin Credentials (Email, Mobile, or Password).' });
-    }
-    isFinalAdmin = true;
-  } else {
-    // Normal User (Google) Path - Always Non-Admin as requested
-    isFinalAdmin = false;
-  }
+  // Auto-detect admin status based on authorized list
+  const isAuthorizedEmail = email && store.systemConfig.authorizedAdminEmails.includes(email);
+  const isAuthorizedMobile = mobile && store.systemConfig.authorizedAdminMobiles.includes(mobile);
+  
+  // If the user is in the authorized admin list, they are logged in as admin
+  // No separate isAdminRequest or password check required for initial login detection
+  const isFinalAdmin = isAuthorizedEmail || isAuthorizedMobile;
 
   let user = store.users.find((u) => u.email === email);
   if (!user) {
@@ -586,7 +591,7 @@ app.get('/api/proxy/receipts', (req: Request, res: Response) => {
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
-      server: { middlewareMode: true, hmr: false },
+      server: { middlewareMode: true, hmr: false, ws: false },
       appType: 'custom',
     });
     app.use(vite.middlewares);
