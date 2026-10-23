@@ -1,0 +1,9 @@
+.git
+.gitignore
+node_modules
+dist
+build
+*.zip
+public/*.zip
+.env*
+!.env.example

@@ -13,6 +13,7 @@ import { AdminPanel } from './components/AdminPanel';
 import { KeysManager } from './components/KeysManager';
 import { DataPacks } from './components/DataPacks';
 import { SubscriptionPlans } from './components/SubscriptionPlans';
+import { ExportModal } from './components/ExportModal';
 import { Bot, Key, Sparkles, ShieldCheck, Heart, ArrowLeft } from 'lucide-react';
 
 import { getDisplayVersion } from './version';
@@ -26,6 +27,7 @@ export default function App() {
   const [selectedModelDetail, setSelectedModelDetail] = useState<AIModel | null>(null);
   const [isRechargeOpen, setIsRechargeOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
   const [playgroundModelId, setPlaygroundModelId] = useState<string>('deepseek-v3');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -272,7 +274,11 @@ export default function App() {
 
         {/* Tab 5: Admin Control Panel */}
         {activeTab === 'admin' && (
-          <AdminPanel user={user} onBack={() => setActiveTab('models')} />
+          <AdminPanel 
+            user={user} 
+            onBack={() => setActiveTab('models')} 
+            onOpenExportZip={() => setIsExportOpen(true)}
+          />
         )}
 
         {/* Tab 6: Data Packs Viewer */}
@@ -329,6 +335,11 @@ export default function App() {
           if (loggedInUser.mobile) localStorage.setItem('airecharge_last_mobile', loggedInUser.mobile);
           setActiveTab('models');
         }}
+      />
+
+      <ExportModal
+        isOpen={isExportOpen}
+        onClose={() => setIsExportOpen(false)}
       />
 
     </div>

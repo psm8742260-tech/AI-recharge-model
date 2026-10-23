@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, Zap, LogOut, Lock, Database, Sparkles, Menu } from 'lucide-react';
+import { Bot, Zap, LogOut, Lock, Database, Sparkles, Menu, FileArchive, Download } from 'lucide-react';
 import { UserAccount } from '../types';
 
 interface NavbarProps {
@@ -9,6 +9,7 @@ interface NavbarProps {
   onOpenRecharge: () => void;
   onOpenAuth: () => void;
   onLogout: () => void;
+  onOpenExportZip?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -18,6 +19,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenRecharge,
   onOpenAuth,
   onLogout,
+  onOpenExportZip,
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm py-3">
@@ -54,11 +56,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </a>
 
-          {/* Gateway badge with action buttons stacked directly underneath */}
+          {/* Gateway badge stacked next to action icons */}
           <div className="flex flex-col items-end gap-1.5 shrink-0">
-            <span className="text-[10px] uppercase font-black tracking-widest px-2 py-0.5 bg-cyan-500 text-slate-950 rounded shadow-sm">
-              Gateway
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] uppercase font-black tracking-widest px-2 py-0.5 bg-cyan-500 text-slate-950 rounded shadow-sm">
+                Gateway
+              </span>
+            </div>
+
             <div className="flex items-center gap-2">
               {user && user.isAdmin && (
                 <button 

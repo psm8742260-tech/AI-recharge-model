@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Zap, Sparkles, Settings, Database, Activity, Save, Plus, Trash2, ShieldAlert, Cpu, ShieldCheck, ArrowLeft, CreditCard, QrCode, Upload } from 'lucide-react';
+import { Shield, Zap, Sparkles, Settings, Database, Save, Trash2, ShieldAlert, ShieldCheck, ArrowLeft, CreditCard, QrCode, Upload, FileArchive } from 'lucide-react';
 import { SubscriptionPlan, TopUpPack } from '../data/plansData';
 import { UserAccount } from '../types';
 
@@ -8,6 +8,7 @@ import { getDisplayVersion } from '../version';
 interface AdminPanelProps {
   user: UserAccount | null;
   onBack: () => void;
+  onOpenExportZip?: () => void;
 }
 
 interface AdminConfig {
@@ -23,7 +24,7 @@ interface AdminConfig {
   qrCodeUrl?: string;
 }
 
-export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack }) => {
+export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExportZip }) => {
   const [activeTab, setActiveTab] = useState(0);
   const [config, setConfig] = useState<AdminConfig | null>(null);
   const [users, setUsers] = useState<UserAccount[]>([]);
@@ -243,7 +244,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack }) => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-[10px] font-bold text-slate-400 flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             {getDisplayVersion()}
@@ -398,6 +399,31 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack }) => {
         {/* Tab 1: System Settings */}
         {activeTab === 1 && config && (
           <div className="max-w-2xl space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* cPanel Export ZIP Section */}
+            {onOpenExportZip && (
+              <div className="p-5 rounded-2xl bg-slate-900/90 border border-cyan-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg shadow-cyan-950/30">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center shrink-0">
+                    <FileArchive className="w-5 h-5 text-cyan-400" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-extrabold text-white">cPanel మెయిన్ జిప్ ఫైల్ (Export Source ZIP)</h4>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      భవిష్యత్తులో cPanel వెబ్ హోస్టింగ్ లో అప్‌లోడ్ చేయడానికి పూర్తి ప్రాజెక్ట్ జిప్ ఫైల్ డౌన్‌లోడ్ చేసుకోండి.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={onOpenExportZip}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-black text-xs transition-all shadow-md shrink-0 flex items-center gap-2 cursor-pointer"
+                >
+                  <FileArchive className="w-4 h-4" />
+                  <span>డౌన్‌లోడ్ జిప్</span>
+                </button>
+              </div>
+            )}
+
+
             <div className="p-6 rounded-2xl glass-panel space-y-6 border-slate-700/50">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>

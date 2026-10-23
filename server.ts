@@ -4,6 +4,7 @@ import { GoogleGenAI } from '@google/genai';
 import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
+import JSZip from 'jszip';
 
 dotenv.config();
 
@@ -187,9 +188,170 @@ function generateApiKey(): string {
   return `phrs-${rand}`;
 }
 
-// ==========================================
-// API ENDPOINTS
-// ==========================================
+
+
+// Export Main Project ZIP Endpoint for cPanel & Web Hosting
+app.get('/api/export-zip', async (req: Request, res: Response) => {
+  try {
+    const rootDir = process.cwd();
+    const zip = new JSZip();
+
+    // Helper to add directory to zip
+    const addDirectoryToZip = (dirPath: string, zipFolder: JSZip) => {
+      if (!fs.existsSync(dirPath)) return;
+      const items = fs.readdirSync(dirPath);
+      for (const item of items) {
+        if (item === 'node_modules' || item === 'dist' || item === '.git' || item === '.cache') continue;
+        const fullPath = path.join(dirPath, item);
+        const stat = fs.statSync(fullPath);
+        if (stat.isDirectory()) {
+          const subFolder = zipFolder.folder(item);
+          if (subFolder) addDirectoryToZip(fullPath, subFolder);
+        } else {
+          const fileData = fs.readFileSync(fullPath);
+          zipFolder.file(item, fileData);
+        }
+      }
+    };
+
+    // Add src directory
+    const srcDir = path.join(rootDir, 'src');
+    if (fs.existsSync(srcDir)) {
+      const srcFolder = zip.folder('src');
+      if (srcFolder) addDirectoryToZip(srcDir, srcFolder);
+    }
+
+    // Add public directory if exists
+    const publicDir = path.join(rootDir, 'public');
+    if (fs.existsSync(publicDir)) {
+      const publicFolder = zip.folder('public');
+      if (publicFolder) addDirectoryToZip(publicDir, publicFolder);
+    }
+
+    // Add root files
+    const rootFiles = [
+      'package.json',
+      'tsconfig.json',
+      'vite.config.ts',
+      'server.ts',
+      'server.js',
+      'index.html',
+      'server_store.json',
+      '.env.example',
+      'README.md'
+    ];
+
+    for (const file of rootFiles) {
+      const filePath = path.join(rootDir, file);
+      if (fs.existsSync(filePath)) {
+        const fileData = fs.readFileSync(filePath);
+        zip.file(file, fileData);
+      }
+    }
+
+    // Add Telugu guide file for cPanel
+    const cpanelGuide = `=====================================================
+AI RECHARGE MODELS - CPANEL DEPLOYMENT GUIDE (తెలుగు)
+=====================================================
+
+1. ఈ ZIP ఫైల్ లో మీ మొత్తం అప్లికేషన్ సోర్స్ కోడ్ మరియు సర్వర్ ఫైల్స్ ఉన్నాయి.
+2. cPanel File Manager లో ఈ ZIP ఎక్స్‌ట్రాక్ట్ చేశాక:
+   - Application startup file: server.js అని సెట్ చేయండి (server.ts కాదు).
+3. "edgesOut" ఎర్రర్ వస్తే:
+   - File Manager లో package-lock.json మరియు node_modules ని డిలీట్ చేయండి.
+   - ఆపై cPanel "Run NPM Install" బటన్ నొక్కండి.
+4. "SAVE" నొక్కి, "RESTART" చేయండి.
+`;
+    zip.file('CPANEL_README_TELUGU.txt', cpanelGuide);
+
+    const buffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="airecharge-cpanel-main.zip"');
+    res.setHeader('Content-Length', buffer.length.toString());
+    res.send(buffer);
+  } catch (err: any) {
+    console.error('Export ZIP error:', err);
+    res.status(500).json({ success: false, message: 'Export failed: ' + err.message });
+  }
+});
+
+// Export Static Web Build ZIP Endpoint for cPanel public_html Direct Upload
+app.get('/api/export-public-html', async (req: Request, res: Response) => {
+  try {
+    const rootDir = process.cwd();
+    const zip = new JSZip();
+
+    const addFolderToZip = (dirPath: string, zipFolder: JSZip) => {
+      if (!fs.existsSync(dirPath)) return;
+      const items = fs.readdirSync(dirPath);
+      for (const item of items) {
+        const fullPath = path.join(dirPath, item);
+        const stat = fs.statSync(fullPath);
+        if (stat.isDirectory()) {
+          const subFolder = zipFolder.folder(item);
+          if (subFolder) addFolderToZip(fullPath, subFolder);
+        } else {
+          const fileData = fs.readFileSync(fullPath);
+          zipFolder.file(item, fileData);
+        }
+      }
+    };
+
+    const distDir = path.join(rootDir, 'dist');
+    if (fs.existsSync(distDir)) {
+      addFolderToZip(distDir, zip);
+    } else {
+      // Fallback: Add public directory content & index.html
+      const publicDir = path.join(rootDir, 'public');
+      if (fs.existsSync(publicDir)) {
+        addFolderToZip(publicDir, zip);
+      }
+      const indexPath = path.join(rootDir, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        zip.file('index.html', fs.readFileSync(indexPath));
+      }
+    }
+
+    // Add .htaccess for Apache SPA Routing & HTTPS Redirect in public_html
+    const htaccessContent = `<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  # Force HTTPS Redirect
+  RewriteCond %{HTTPS} off
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  RewriteRule ^index\\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
+`;
+    zip.file('.htaccess', htaccessContent);
+
+    // Add Telugu Guide for public_html
+    const publicHtmlGuide = `=====================================================
+cPanel public_html డైరెక్ట్ అప్‌లోడ్ గైడ్ (TELUGU)
+=====================================================
+
+1. ఈ ZIP ఫైల్ లోని అన్ని ఫైల్స్‌ను మీ cPanel "public_html" ఫోల్డర్ లోకి అప్‌లోడ్ చేసి ఎక్స్‌ట్రాక్ట్ (Extract) చేయండి.
+2. ఈ ZIP లో ఇప్పటికే ".htaccess" ఫైల్ చేర్చబడింది. ఇది cPanel లో పేజీ రీఫ్రెష్ చేసినప్పుడు 404 ఎర్రర్ రాకుండా చూస్తుంది.
+3. cPanel File Manager Settings లో "Show Hidden Files (.dotfiles)" ఆన్ లో ఉందో లేదో సరిచూసుకోండి.
+4. అంతే! మీ వెబ్‌సైట్ నేరుగా మీ డొమైన్ లో లైవ్ అవుతుంది.
+`;
+    zip.file('README_PUBLIC_HTML_TELUGU.txt', publicHtmlGuide);
+
+    const buffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="cpanel_public_html.zip"');
+    res.setHeader('Content-Length', buffer.length.toString());
+    res.send(buffer);
+  } catch (err: any) {
+    console.error('Export public_html ZIP error:', err);
+    res.status(500).json({ success: false, message: 'Export public_html failed: ' + err.message });
+  }
+});
 
 // Admin API
 app.get('/api/admin/config', (req, res) => {
