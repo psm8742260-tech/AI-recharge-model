@@ -53,8 +53,21 @@ export default function App() {
 
   useEffect(() => {
     const initiateAutoLogin = async () => {
+      // First check local storage saved account
+      const savedAccount = localStorage.getItem('airecharge_user_account');
+      if (savedAccount) {
+        try {
+          const parsed = JSON.parse(savedAccount);
+          if (parsed && parsed.email) {
+            setUser(parsed);
+          }
+        } catch (e) {
+          console.error('Failed to parse saved user account:', e);
+        }
+      }
+
       const sessionExists = await fetchUserData();
-      if (!sessionExists) {
+      if (!sessionExists && !savedAccount) {
         // Attempt silent re-login if we have previous data
         const storedEmail = localStorage.getItem('airecharge_last_email');
         const storedMobile = localStorage.getItem('airecharge_last_mobile');
@@ -71,9 +84,11 @@ export default function App() {
                 isAdminRequest: false
               }),
             });
-            const data = await res.json();
-            if (data.success) {
-              setUser(data.user);
+            if (res.ok) {
+              const data = await res.json();
+              if (data && data.success && data.user) {
+                setUser(data.user);
+              }
             }
           } catch (err) {
             console.error('Silent login failed:', err);
