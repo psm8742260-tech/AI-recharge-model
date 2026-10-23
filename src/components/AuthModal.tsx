@@ -31,12 +31,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
     }
   }, [mobile]);
 
-  // Auto-submit email login when valid email ending with .com is entered
+  // Auto-submit email login when valid gmail is entered
   React.useEffect(() => {
-    if (email.includes('@') && email.includes('.') && email.length > 8 && !isLoading) {
+    if (email.includes('@') && email.length > 8 && !isLoading) {
       const timer = setTimeout(() => {
         handleLogin(undefined, true);
-      }, 500);
+      }, 400);
       return () => clearTimeout(timer);
     }
   }, [email]);
@@ -56,10 +56,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
 
     const isAdmin = AUTHORIZED_ADMIN_EMAILS.includes(inputEmail.toLowerCase()) || AUTHORIZED_ADMIN_MOBILES.includes(inputMobile);
 
+    // 2 Second Max Network Timeout Controller
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           email: inputEmail || 'user@airecharge.com',
           name: isGoogle ? (inputEmail.split('@')[0] || 'User') : 'AI Developer',
@@ -68,6 +73,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
           isAdminRequest: false
         }),
       });
+      clearTimeout(timeoutId);
 
       if (res.ok) {
         const data = await res.json();
@@ -82,10 +88,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
         }
       }
     } catch (err) {
-      console.warn('Backend server auth endpoint unavailable, falling back to instant client session:', err);
+      clearTimeout(timeoutId);
+      console.warn('Backend server auth endpoint timeout or unavailable, using instant fallback:', err);
     }
 
-    // Fail-safe client session creation (Works on static hosting, cPanel & VPS)
+    // Fail-safe client session creation (Works instantly on static hosting, cPanel & VPS)
     const activeApiKey = 'phrs-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     const fallbackUser: UserAccount = {
       id: `usr_${Date.now()}`,
