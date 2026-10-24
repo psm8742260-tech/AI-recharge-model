@@ -31,12 +31,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
     }
   }, [mobile]);
 
-  // Auto-submit email login when valid gmail is entered
+  // Auto-submit email login ONLY when a complete, valid email address is entered (e.g. psm8742260@gmail.com)
   React.useEffect(() => {
-    if (email.includes('@') && email.length > 8 && !isLoading) {
+    const trimmed = email.trim();
+    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(trimmed);
+    if (isValidEmail && !isLoading) {
       const timer = setTimeout(() => {
         handleLogin(undefined, true);
-      }, 400);
+      }, 500);
       return () => clearTimeout(timer);
     }
   }, [email]);

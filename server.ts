@@ -77,7 +77,7 @@ interface RechargeTransaction {
   paymentMethod: string;
 }
 
-import { SUBSCRIPTION_PLANS, TOP_UP_PACKS } from './src/data/plansData';
+import { SUBSCRIPTION_PLANS, TOP_UP_PACKS } from './src/data/plansData.js';
 
 const DB_FILE = path.resolve(process.cwd(), 'server_store.json');
 
