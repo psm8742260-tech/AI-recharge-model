@@ -35,9 +35,27 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
   // activeBoard: 1 = Plans Selection, 2 = Payment QR Gateway, 3 = API Key Success
   const [activeBoard, setActiveBoard] = useState<1 | 2 | 3>(1);
   const [activeTab, setActiveTab] = useState<'plans' | 'topups'>('plans');
-  const [plans, setPlans] = useState<SubscriptionPlan[]>(SUBSCRIPTION_PLANS);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>(() => {
+    try {
+      const cached = localStorage.getItem('airecharge_plans');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return SUBSCRIPTION_PLANS;
+  });
   const [topups, setTopups] = useState<TopUpPack[]>(TOP_UP_PACKS);
-  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan>(SUBSCRIPTION_PLANS[0]);
+  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan>(() => {
+    try {
+      const cached = localStorage.getItem('airecharge_plans');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed[0];
+      }
+    } catch (e) {}
+    return SUBSCRIPTION_PLANS[0];
+  });
   const [selectedTopUp, setSelectedTopUp] = useState<TopUpPack>(TOP_UP_PACKS[0]);
   const [upiId, setUpiId] = useState('psm8742260@upi');
   const [utrRef, setUtrRef] = useState('');
@@ -56,13 +74,34 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    const handlePlansUpdated = (event: any) => {
+      if (event.detail && Array.isArray(event.detail)) {
+        setPlans(event.detail);
+        setSelectedPlan((prev) => event.detail.find((p: any) => p.id === prev.id) || event.detail[0]);
+      }
+    };
+    window.addEventListener('airecharge_plans_updated', handlePlansUpdated);
+    return () => window.removeEventListener('airecharge_plans_updated', handlePlansUpdated);
+  }, []);
+
   const fetchPlans = async () => {
     try {
+      const cached = localStorage.getItem('airecharge_plans');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setPlans(parsed);
+          setSelectedPlan((prev) => parsed.find((p: any) => p.id === prev.id) || parsed[0]);
+        }
+      }
+
       const res = await fetch('/api/admin/config');
       const data = await res.json();
       if (data.plans && data.plans.length > 0) {
         setPlans(data.plans);
-        setSelectedPlan(data.plans[0]);
+        setSelectedPlan((prev) => data.plans.find((p: any) => p.id === prev.id) || data.plans[0]);
+        localStorage.setItem('airecharge_plans', JSON.stringify(data.plans));
       }
       if (data.topups && data.topups.length > 0) {
         setTopups(data.topups);

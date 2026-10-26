@@ -10,7 +10,8 @@
 export const APP_VERSION_MODE = 'HYBRID VERSION';
 export const APP_ENGINE_STATUS = 'ACTIVE';
 export const GATEWAY_MODE = 'REVERSE PROXY';
-export const BUILD_STAMP = '2026-10-23';
+export const BUILD_STAMP = 'HYBRID BUILD';
+export const NODE_BACKEND_STATUS = 'NODE.JS HYBRID READY';
 
 /** 
  * PROJECT LOCK: These identifiers must never be changed.
@@ -27,3 +28,6 @@ export const TESTING_MODE = true;
 export const getDisplayVersion = () => APP_VERSION_MODE;
 export const getBuildInfo = () => `${APP_VERSION_MODE} [${APP_ENGINE_STATUS}]`;
 export const getFingerprint = () => PROJECT_SHA_FINGERPRINT;
+export const getNodeStatus = () => NODE_BACKEND_STATUS;
+export const getDeploymentMode = () => 'CPANEL & NODE.JS HYBRID';
+

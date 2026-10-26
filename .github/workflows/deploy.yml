@@ -1,35 +1,42 @@
-name: Deploy to VPS (FTP)
+name: Auto-Deploy to cPanel Server
 
+# Triggers whenever code is pushed to main or master branch, or manually triggered
 on:
   push:
     branches:
       - main
+      - master
+  workflow_dispatch:
 
 jobs:
-  deploy:
+  build-and-deploy:
+    name: Build & Auto Deploy to cPanel
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Code
+      - name: 📥 1. Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: ⚙️ 2. Setup Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
-      - name: Install Dependencies
+      - name: 📦 3. Install Dependencies
         run: |
-          rm -f package-lock.json
           npm install --legacy-peer-deps
 
-      - name: Build Application
-        run: npm run build
+      - name: 🔨 4. Build Production Bundle
+        run: |
+          npm run build
 
-      - name: FTP Deploy
+      - name: 🚀 5. Sync to cPanel Server via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: phrscrowd.online
-          username: phrscrow
+          server: ${{ secrets.FTP_SERVER || 'phrscrowd.online' }}
+          username: ${{ secrets.FTP_USERNAME || 'phrscrow' }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: dist/
-          server-dir: /public_html/arm/
+          server-dir: ${{ secrets.FTP_SERVER_DIR || '/public_html/arm/' }}
+          dangerous-clean-slate: false

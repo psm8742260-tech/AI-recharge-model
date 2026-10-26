@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Bot, Mail, Lock, User, ShieldCheck, ArrowRight, Sparkles, ArrowLeft, Smartphone, Loader2, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Smartphone, Loader2, CheckCircle2, ShieldCheck, Sparkles, KeyRound } from 'lucide-react';
 import { UserAccount } from '../types';
 
 export const GmailIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
@@ -19,48 +19,56 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess }) => {
-  const [isMobileInputActive, setIsMobileInputActive] = useState(false);
   const [email, setEmail] = useState('');
   const [mobile, setMobile] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loginMessage, setLoginMessage] = useState('');
 
-  // Auto-submit mobile login when 10 digits are entered
+  // Prefill last saved credentials if present
   React.useEffect(() => {
-    if (mobile.length === 10 && !isLoading) {
-      handleLogin(undefined, false);
+    if (isOpen) {
+      const lastEmail = localStorage.getItem('airecharge_last_email') || '';
+      const lastMobile = localStorage.getItem('airecharge_last_mobile') || '';
+      if (lastEmail) setEmail(lastEmail);
+      if (lastMobile) setMobile(lastMobile);
     }
-  }, [mobile]);
-
-  // Auto-submit email login ONLY when a complete, valid email address is entered (e.g. psm8742260@gmail.com)
-  React.useEffect(() => {
-    const trimmed = email.trim();
-    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(trimmed);
-    if (isValidEmail && !isLoading) {
-      const timer = setTimeout(() => {
-        handleLogin(undefined, true);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [email]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const handleLogin = async (e?: React.FormEvent, isGoogle = false) => {
+  const handleLogin = async (e?: React.FormEvent, forceAdmin = false) => {
     if (e) e.preventDefault();
     if (isLoading) return;
     setIsLoading(true);
+    setLoginMessage('లాగిన్ వెరిఫై అవుతోంది...');
 
-    const inputEmail = (isGoogle ? email : (isMobileInputActive ? '' : email)).trim();
-    const inputMobile = isMobileInputActive ? mobile.trim() : '';
+    let inputEmail = forceAdmin ? 'psm8742260@gmail.com' : email.trim();
+    let inputMobile = forceAdmin ? '8466062260' : mobile.trim().replace(/\D/g, '');
+
+    // Smart swap if user entered phone into email field
+    if (inputEmail && !inputEmail.includes('@') && inputEmail.replace(/\D/g, '').length === 10) {
+      inputMobile = inputEmail.replace(/\D/g, '');
+      inputEmail = '';
+    }
+
+    // Smart swap if user entered email into mobile field
+    if (inputMobile && inputMobile.includes('@')) {
+      inputEmail = inputMobile;
+      inputMobile = '';
+    }
 
     const AUTHORIZED_ADMIN_EMAILS = ['psm8742260@gmail.com'];
     const AUTHORIZED_ADMIN_MOBILES = ['8466062260'];
+    const AUTHORIZED_PINS = ['6606.0k', '2634t', '6606', '6606.0'];
 
-    const isAdmin = AUTHORIZED_ADMIN_EMAILS.includes(inputEmail.toLowerCase()) || AUTHORIZED_ADMIN_MOBILES.includes(inputMobile);
+    const isAuthorizedEmail = inputEmail && AUTHORIZED_ADMIN_EMAILS.includes(inputEmail.toLowerCase());
+    const isAuthorizedMobile = inputMobile && AUTHORIZED_ADMIN_MOBILES.includes(inputMobile);
+    const isPinMatch = AUTHORIZED_PINS.includes(inputEmail.toLowerCase()) || AUTHORIZED_PINS.includes(inputMobile.toLowerCase());
+    const isAdmin = forceAdmin || isAuthorizedEmail || isAuthorizedMobile || isPinMatch;
 
-    // 2 Second Max Network Timeout Controller
+    // 4-second timeout for reliable network handling even on slow 4G/cPanel servers
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
 
     try {
       const res = await fetch('/api/auth/login', {
@@ -68,16 +76,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
         headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,
         body: JSON.stringify({
-          email: inputEmail || 'user@airecharge.com',
-          name: isGoogle ? (inputEmail.split('@')[0] || 'User') : 'AI Developer',
+          email: inputEmail || (inputMobile ? `${inputMobile}@airecharge.user` : 'psm8742260@gmail.com'),
+          name: isAdmin ? 'Priya Sharma (Admin)' : (inputEmail ? inputEmail.split('@')[0] : (inputMobile ? `User ${inputMobile.slice(-4)}` : 'AI Developer')),
           mobile: inputMobile,
-          provider: isGoogle ? 'google' : 'email',
-          isAdminRequest: false
+          provider: 'hybrid_auth',
+          isAdminRequest: isAdmin
         }),
       });
       clearTimeout(timeoutId);
 
-      if (res.ok) {
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
         const data = await res.json();
         if (data && data.success && data.user) {
           if (inputEmail) localStorage.setItem('airecharge_last_email', inputEmail);
@@ -91,28 +100,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
       }
     } catch (err) {
       clearTimeout(timeoutId);
-      console.warn('Backend server auth endpoint timeout or unavailable, using instant fallback:', err);
+      console.warn('Backend server auth endpoint unavailable or static hosting mode, using instant client fallback:', err);
     }
 
-    // Fail-safe client session creation (Works instantly on static hosting, cPanel & VPS)
-    const activeApiKey = 'phrs-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    // Fail-safe client session creation (Works 100% instantly on static hosting, cPanel & VPS)
+    const activeApiKey = isAdmin ? 'phrs-7f9a2d8e41bc90a57f9a2d8e41bc90a5' : ('phrs-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15));
     const fallbackUser: UserAccount = {
-      id: `usr_${Date.now()}`,
-      email: inputEmail || (inputMobile ? '' : 'user@airecharge.com'),
-      name: inputEmail ? (inputEmail.split('@')[0] || 'AI Developer') : (inputMobile ? `User ${inputMobile.slice(-4)}` : 'AI Developer'),
-      mobile: inputMobile || '',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-      activePlanId: 'plan-1m',
-      activePlanName: '1 Month Starter Pack',
-      planDurationMonths: 1,
-      dataPackMBTotal: 2048,
-      dataPackMBRemaining: 1840.25,
-      dailyLimitMB: 800,
-      dailyUsedMB: 124.75,
+      id: isAdmin ? 'usr_admin_master' : `usr_${Date.now()}`,
+      email: inputEmail || (inputMobile ? `${inputMobile}@airecharge.user` : (isAdmin ? 'psm8742260@gmail.com' : 'user@airecharge.com')),
+      name: isAdmin ? 'Priya Sharma (Admin)' : (inputEmail ? (inputEmail.split('@')[0] || 'AI Developer') : (inputMobile ? `User ${inputMobile.slice(-4)}` : 'AI Developer')),
+      mobile: inputMobile || (isAdmin ? '8466062260' : ''),
+      avatar: isAdmin ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150' : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+      activePlanId: isAdmin ? 'plan-master' : 'plan-1m',
+      activePlanName: isAdmin ? 'Master Admin Unlimited Access' : '1 Month Starter Pack',
+      planDurationMonths: isAdmin ? 12 : 1,
+      dataPackMBTotal: isAdmin ? 1024000 : 2048,
+      dataPackMBRemaining: isAdmin ? 1024000 : 1840.25,
+      dailyLimitMB: isAdmin ? 50000 : 800,
+      dailyUsedMB: 0,
       lastResetDate: new Date().toISOString().split('T')[0],
-      expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
       activeApiKey: activeApiKey,
-      isAdmin: isAdmin, // Strictly true ONLY for psm8742260@gmail.com or 8466062260
+      isAdmin: isAdmin,
       keysHistory: [
         {
           key: activeApiKey,
@@ -132,147 +141,131 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
-      <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-4 sm:p-6 relative shadow-2xl space-y-4 text-slate-900">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-5 sm:p-7 relative shadow-2xl space-y-4 text-slate-900">
         
         {/* Back Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 left-5 p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/50 transition-all shadow-lg"
+          className="absolute top-5 left-5 p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all shadow-sm cursor-pointer"
           title="మళ్ళీ వెనక్కి వెళ్ళండి"
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
 
         {/* Modal Brand Lockup */}
-        <div className="text-center space-y-4">
-          <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl bg-gradient-to-tr from-cyan-400 via-sky-400 to-emerald-400 p-0.5 mx-auto shadow-2xl shadow-cyan-500/25 overflow-hidden">
-            <div className="w-full h-full bg-slate-950 rounded-[22px] flex items-center justify-center overflow-hidden">
+        <div className="text-center space-y-2 pt-2">
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-cyan-400 via-sky-400 to-emerald-400 p-0.5 mx-auto shadow-xl shadow-cyan-500/20 overflow-hidden">
+            <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center overflow-hidden">
               <img src="/app_logo.png" alt="Logo" className="w-full h-full object-cover" />
             </div>
           </div>
 
           <div>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight mt-2">
+            <h2 className="text-2xl font-black text-slate-950 tracking-tight">
               AI RECHARGE MODELS
             </h2>
+            <p className="text-xs text-slate-500 font-medium">
+              జిమెయిల్ లేదా మొబైల్ నంబర్‌తో లైవ్ లాగిన్
+            </p>
           </div>
         </div>
 
-        {/* UNIFIED LOGIN FORM */}
-        <form onSubmit={(e) => handleLogin(e, !isMobileInputActive)} className="space-y-4 py-2">
-          <div className="relative group">
-            {!isMobileInputActive ? (
-              <div className="space-y-2">
-                <div className="relative">
-                  {/* Left: Gmail Icon */}
-                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center">
-                    <GmailIcon className="w-6 h-6 shrink-0" />
-                  </div>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter Gmail Address"
-                    className="w-full bg-slate-950 border-2 border-cyan-500/30 rounded-xl pl-12 pr-12 py-3 text-sm font-bold text-white placeholder-slate-400 focus:outline-none focus:border-cyan-400 shadow-lg transition-colors"
-                  />
-                  {/* Right: Loading Icon */}
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center">
-                    <Loader2 className={`w-5 h-5 text-cyan-400 ${isLoading ? 'animate-spin' : 'animate-[spin_4s_linear_infinite] opacity-75'}`} />
-                  </div>
-                </div>
-                <p className="text-[10px] text-center text-slate-600 font-medium">
-                  జిమెయిల్ ఐడి టైప్ చేయగానే ఆటోమేటిక్‌గా వెరిఫై అవుతుంది
-                </p>
+        {/* ADMIN GARU 1-CLICK INSTANT LOGIN CARD */}
+        <button
+          type="button"
+          onClick={() => handleLogin(undefined, true)}
+          disabled={isLoading}
+          className="w-full p-3 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 border-2 border-cyan-500/40 hover:border-cyan-400 text-left transition-all group shadow-lg cursor-pointer"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+                <ShieldCheck className="w-5 h-5" />
               </div>
-            ) : (
-              <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                <div className="relative">
-                  {/* Left: Mobile Icon */}
-                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center">
-                    <Smartphone className="w-5 h-5 text-cyan-400 shrink-0" />
-                  </div>
-                  <input
-                    type="tel"
-                    autoFocus
-                    required
-                    value={mobile}
-                    onChange={(e) => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                    placeholder="Enter 10-digit Mobile Number"
-                    className="w-full bg-slate-950 border-2 border-cyan-500/50 rounded-xl pl-12 pr-12 py-3 text-sm text-center font-black tracking-[0.2em] text-cyan-400 placeholder-slate-500 focus:outline-none focus:border-cyan-400 shadow-lg shadow-cyan-500/10"
-                  />
-                  {/* Right: Loading Icon */}
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center">
-                    <Loader2 className={`w-5 h-5 text-cyan-400 ${isLoading ? 'animate-spin' : 'animate-[spin_4s_linear_infinite] opacity-75'}`} />
-                  </div>
+              <div>
+                <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                  అడ్మిన్ గారు (Admin One-Click Login)
+                  <span className="text-[9px] px-1.5 py-0.2 bg-emerald-500 text-slate-950 font-black rounded-full">ACTIVE</span>
                 </div>
-                <p className="text-[10px] text-center text-cyan-600 font-bold uppercase tracking-widest">
-                  Auto-verifying number...
-                </p>
+                <div className="text-[11px] text-cyan-300 font-mono">
+                  psm8742260@gmail.com • 8466062260
+                </div>
               </div>
-            )}
+            </div>
+            <Sparkles className="w-4 h-4 text-cyan-400 animate-pulse" />
+          </div>
+        </button>
+
+        <div className="relative flex py-1 items-center">
+          <div className="flex-grow border-t border-slate-200"></div>
+          <span className="flex-shrink mx-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">లేదా మీ వివరాలతో</span>
+          <div className="flex-grow border-t border-slate-200"></div>
+        </div>
+
+        {/* DUAL LOGIN FORM (BOTH GMAIL & MOBILE SIMULTANEOUSLY) */}
+        <form onSubmit={(e) => handleLogin(e, false)} className="space-y-3.5">
+          {/* Field 1: Gmail Input */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+              <GmailIcon className="w-4 h-4" />
+              జిమెయిల్ చిరునామా (Gmail Address)
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                inputMode="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="psm8742260@gmail.com"
+                className="w-full bg-slate-50 border-2 border-slate-200 hover:border-slate-300 focus:border-cyan-500 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-900 placeholder-slate-400 focus:outline-none transition-colors"
+              />
+            </div>
           </div>
 
-          {/* Action Submit Button */}
+          {/* Field 2: Mobile Number Input */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+              <Smartphone className="w-4 h-4 text-emerald-600" />
+              10-అంకెల మొబైల్ నంబర్ (Mobile Number)
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                inputMode="tel"
+                value={mobile}
+                onChange={(e) => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                placeholder="8466062260"
+                className="w-full bg-slate-50 border-2 border-slate-200 hover:border-slate-300 focus:border-cyan-500 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold tracking-wider text-slate-900 placeholder-slate-400 focus:outline-none transition-colors"
+              />
+            </div>
+          </div>
+
+          {/* Submit Action Button */}
           <button
             type="submit"
-            disabled={isLoading || (!email && !mobile)}
-            className="w-full py-3.5 px-4 bg-gradient-to-r from-cyan-500 via-sky-500 to-emerald-500 hover:from-cyan-400 hover:via-sky-400 hover:to-emerald-400 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2 disabled:opacity-40 transition-all active:scale-[0.98] cursor-pointer"
+            disabled={isLoading || (!email.trim() && !mobile.trim())}
+            className="w-full py-3 px-4 bg-gradient-to-r from-cyan-500 via-sky-500 to-emerald-500 hover:from-cyan-400 hover:via-sky-400 hover:to-emerald-400 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2 disabled:opacity-40 transition-all active:scale-[0.98] cursor-pointer mt-2"
           >
             {isLoading ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin text-slate-950" />
-                లాగిన్ అవుతోంది...
+                <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                <span>{loginMessage || 'ఓపెన్ అవుతోంది...'}</span>
               </>
             ) : (
               <>
-                <CheckCircle2 className="w-5 h-5" />
-                లాగిన్ అవ్వండి (Submit Login)
+                <CheckCircle2 className="w-4 h-4" />
+                <span>లాగిన్ అవ్వండి (Open & Login)</span>
               </>
             )}
           </button>
-          
-          <div className="flex flex-col items-center gap-4 pt-1">
-            <div className="w-full flex items-center gap-4">
-              <div className="h-px bg-slate-200 flex-1"></div>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsMobileInputActive(!isMobileInputActive);
-                  setMobile('');
-                  setEmail('');
-                }}
-                className="w-11 h-11 rounded-2xl bg-slate-950 border-2 border-cyan-500/40 hover:border-cyan-400 flex items-center justify-center text-cyan-400 hover:text-cyan-300 transition-all shadow-xl shadow-cyan-500/15 group cursor-pointer"
-                title={isMobileInputActive ? 'Switch to Gmail Login' : 'Switch to Mobile Login'}
-              >
-                {isMobileInputActive ? (
-                  <GmailIcon className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                ) : (
-                  <Smartphone className="w-6 h-6 group-hover:scale-110 transition-transform text-cyan-400" />
-                )}
-              </button>
-              <div className="h-px bg-slate-200 flex-1"></div>
-            </div>
 
-            <p className="text-[11px] text-center text-slate-600 font-semibold flex items-center gap-1.5 justify-center">
-              {isMobileInputActive ? (
-                <>
-                  <GmailIcon className="w-4 h-4 inline shrink-0" />
-                  <span>జిమెయిల్ ద్వారా లాగిన్ అవ్వడానికి ఐకాన్ క్లిక్ చేయండి</span>
-                </>
-              ) : (
-                <>
-                  <Smartphone className="w-4 h-4 inline text-cyan-600 shrink-0" />
-                  <span>మొబైల్ నంబర్ తో లాగిన్ అవ్వడానికి ఐకాన్ క్లిక్ చేయండి</span>
-                </>
-              )}
-            </p>
-          </div>
+          <p className="text-[10px] text-center text-slate-500">
+            జిమెయిల్ లేదా మొబైల్ నంబర్ ఏది ఇచ్చినా లైవ్ సర్వర్‌లో వెంటనే ఓపెన్ అవుతుంది.
+          </p>
         </form>
 
       </div>
     </div>
   );
 };
-

@@ -9,10 +9,10 @@
       "activePlanName": "1 Month Starter Pack",
       "planDurationMonths": 1,
       "dataPackMBTotal": 4096,
-      "dataPackMBRemaining": 3888.25,
-      "dailyLimitMB": 800,
+      "dataPackMBRemaining": 1024000,
+      "dailyLimitMB": 50000,
       "dailyUsedMB": 0,
-      "lastResetDate": "2026-10-23",
+      "lastResetDate": "2026-10-26",
       "expiryDate": "2026-11-22T05:43:55.852Z",
       "activeApiKey": "phrs-f2ak7p0xnpm99zkrvrzjn6dkt9xcqz22",
       "keysHistory": [
@@ -88,7 +88,9 @@
         "Instant Custom API Key (sk-airecharge-...)",
         "Reverse Proxy Gateway Access",
         "Live Token-to-MB Magic Receipts"
-      ]
+      ],
+      "customField1": "",
+      "customField2": ""
     },
     {
       "id": "plan-2m",
@@ -180,12 +182,15 @@
     "adminEmail": "psm8742260@gmail.com",
     "adminPassword": "2634T",
     "adminMobile": "8466062260",
+    "masterPin": "6606.0k",
     "authorizedAdminEmails": [
       "psm8742260@gmail.com"
     ],
     "authorizedAdminMobiles": [
       "8466062260"
     ],
-    "isPaymentEnabled": true
+    "isPaymentEnabled": true,
+    "upiId": "psm8742260@upi",
+    "qrCodeUrl": ""
   }
 }

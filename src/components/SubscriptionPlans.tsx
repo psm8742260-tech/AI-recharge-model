@@ -1,5 +1,5 @@
-import React from 'react';
-import { SUBSCRIPTION_PLANS } from '../data/plansData';
+import React, { useState, useEffect } from 'react';
+import { SUBSCRIPTION_PLANS, SubscriptionPlan } from '../data/plansData';
 import { Sparkles, CheckCircle2, ArrowRight, Zap } from 'lucide-react';
 
 interface SubscriptionPlansProps {
@@ -8,6 +8,52 @@ interface SubscriptionPlansProps {
 }
 
 export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({ onOpenRecharge, onBack }) => {
+  const [plans, setPlans] = useState<SubscriptionPlan[]>(() => {
+    try {
+      const cached = localStorage.getItem('airecharge_plans');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return SUBSCRIPTION_PLANS;
+  });
+
+  useEffect(() => {
+    const loadPlans = async () => {
+      try {
+        const res = await fetch('/api/admin/config');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.plans && Array.isArray(data.plans) && data.plans.length > 0) {
+            setPlans(data.plans);
+            localStorage.setItem('airecharge_plans', JSON.stringify(data.plans));
+          }
+        }
+      } catch (e) {
+        // Fallback to local cached plans
+      }
+    };
+
+    loadPlans();
+
+    const handlePlansUpdated = (event: any) => {
+      if (event.detail && Array.isArray(event.detail)) {
+        setPlans(event.detail);
+      } else {
+        loadPlans();
+      }
+    };
+
+    window.addEventListener('airecharge_plans_updated', handlePlansUpdated);
+    window.addEventListener('storage', loadPlans);
+
+    return () => {
+      window.removeEventListener('airecharge_plans_updated', handlePlansUpdated);
+      window.removeEventListener('storage', loadPlans);
+    };
+  }, []);
+
   return (
     <div className="space-y-12 pb-16 animate-in fade-in duration-500">
       {/* Header */}
@@ -28,7 +74,7 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({ onOpenRech
 
       {/* Plans Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {SUBSCRIPTION_PLANS.map((plan) => (
+        {plans.map((plan) => (
           <div 
             key={plan.id}
             className="group p-8 rounded-[2rem] bg-slate-900 border border-slate-800 hover:border-cyan-500/50 transition-all duration-300 relative overflow-hidden flex flex-col justify-between"

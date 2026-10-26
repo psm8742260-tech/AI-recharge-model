@@ -19,7 +19,20 @@ import { Bot, Key, Sparkles, ShieldCheck, Heart, ArrowLeft } from 'lucide-react'
 import { getDisplayVersion } from './version';
 
 export default function App() {
-  const [user, setUser] = useState<UserAccount | null>(null);
+  const [user, setUser] = useState<UserAccount | null>(() => {
+    try {
+      const saved = localStorage.getItem('airecharge_user_account');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && (parsed.email || parsed.mobile || parsed.id)) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.error('Failed to parse cached user:', e);
+    }
+    return null;
+  });
   const [receipts, setReceipts] = useState<MagicReceipt[]>([]);
   const [transactions, setTransactions] = useState<RechargeTransaction[]>([]);
   const [activeTab, setActiveTab] = useState<'models' | 'playground' | 'analytics' | 'pricing' | 'keys' | 'admin' | 'datapacks' | 'plans'>('models');
@@ -34,11 +47,23 @@ export default function App() {
   // Load user data on mount
   const fetchUserData = async (): Promise<boolean> => {
     try {
-      const res = await fetch('/api/user/me');
-      if (res.ok) {
+      const headers: Record<string, string> = {};
+      const saved = localStorage.getItem('airecharge_user_account');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed?.email) headers['x-user-email'] = parsed.email;
+          if (parsed?.mobile) headers['x-user-mobile'] = parsed.mobile;
+        } catch {}
+      }
+
+      const res = await fetch('/api/user/me', { headers });
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
         const data = await res.json();
         if (data.user) {
           setUser(data.user);
+          localStorage.setItem('airecharge_user_account', JSON.stringify(data.user));
           setReceipts(data.receipts || []);
           setTransactions(data.transactions || []);
           return true;
@@ -46,19 +71,19 @@ export default function App() {
       }
       return false;
     } catch (err) {
-      console.error('Failed to fetch user state:', err);
+      console.warn('Backend user endpoint unavailable (static hosting mode):', err);
       return false;
     }
   };
 
   useEffect(() => {
     const initiateAutoLogin = async () => {
-      // First check local storage saved account
+      // First check local storage saved account (supports both email & mobile logins)
       const savedAccount = localStorage.getItem('airecharge_user_account');
       if (savedAccount) {
         try {
           const parsed = JSON.parse(savedAccount);
-          if (parsed && parsed.email) {
+          if (parsed && (parsed.email || parsed.mobile || parsed.id)) {
             setUser(parsed);
           }
         } catch (e) {
@@ -68,7 +93,7 @@ export default function App() {
 
       const sessionExists = await fetchUserData();
       if (!sessionExists && !savedAccount) {
-        // Attempt silent re-login if we have previous data
+        // Attempt silent re-login if we have previous credentials
         const storedEmail = localStorage.getItem('airecharge_last_email');
         const storedMobile = localStorage.getItem('airecharge_last_mobile');
         
@@ -78,20 +103,22 @@ export default function App() {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                email: storedEmail || 'user@airecharge.com',
+                email: storedEmail || (storedMobile ? `${storedMobile}@airecharge.user` : 'psm8742260@gmail.com'),
                 mobile: storedMobile || '',
-                provider: storedEmail ? 'google' : 'email',
+                provider: storedEmail ? 'gmail' : 'mobile',
                 isAdminRequest: false
               }),
             });
-            if (res.ok) {
+            const contentType = res.headers.get('content-type') || '';
+            if (res.ok && contentType.includes('application/json')) {
               const data = await res.json();
               if (data && data.success && data.user) {
                 setUser(data.user);
+                localStorage.setItem('airecharge_user_account', JSON.stringify(data.user));
               }
             }
           } catch (err) {
-            console.error('Silent login failed:', err);
+            console.warn('Silent login check:', err);
           }
         }
       }
@@ -141,19 +168,19 @@ export default function App() {
             setIsSidebarOpen(true);
           } else if (tab === 'pricing') {
             setIsRechargeOpen(true);
-          } else if (tab === 'admin' && (!user || !user.isAdmin)) {
-            console.warn('Unauthorized admin access attempt');
           } else {
             setActiveTab(tab);
           }
         }}
         onOpenRecharge={() => setIsRechargeOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
+        onOpenExportZip={() => setIsExportOpen(true)}
         onLogout={() => {
           setUser(null);
           setIsSidebarOpen(false);
           localStorage.removeItem('airecharge_last_email');
           localStorage.removeItem('airecharge_last_mobile');
+          localStorage.removeItem('airecharge_user_account');
         }}
       />
 
@@ -293,6 +320,7 @@ export default function App() {
             user={user} 
             onBack={() => setActiveTab('models')} 
             onOpenExportZip={() => setIsExportOpen(true)}
+            onLoginSuccess={(loggedInUser) => setUser(loggedInUser)}
           />
         )}
 

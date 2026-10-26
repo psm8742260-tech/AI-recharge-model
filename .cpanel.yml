@@ -1,0 +1,13 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/phrscrow/public_html/arm/
+    - /bin/mkdir -p $DEPLOYPATH
+    - /bin/mkdir -p $DEPLOYPATH/tmp
+    - /bin/cp -R dist/* $DEPLOYPATH 2>/dev/null || /bin/cp -R * $DEPLOYPATH
+    - /bin/cp app.js $DEPLOYPATH/ 2>/dev/null || true
+    - /bin/cp server.js $DEPLOYPATH/ 2>/dev/null || true
+    - /bin/cp server_store.json $DEPLOYPATH/ 2>/dev/null || true
+    - /bin/cp package.json $DEPLOYPATH/ 2>/dev/null || true
+    - /bin/cp .htaccess $DEPLOYPATH/ 2>/dev/null || true
+    - /bin/touch $DEPLOYPATH/tmp/restart.txt 2>/dev/null || true
