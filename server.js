@@ -244,19 +244,6 @@ app.get("/api/admin/bundle-info", (req, res) => {
     return res.json({ exists: false, sizeMb: "36.5 MB" });
   }
 });
-app.get(["/download.html", "/download"], (req, res) => {
-  const rootDir = process.cwd();
-  const fileCandidates = [
-    path.join(rootDir, "public", "download.html"),
-    path.join(rootDir, "dist", "download.html"),
-    path.join(rootDir, "download.html")
-  ];
-  const target = fileCandidates.find((f) => fs.existsSync(f));
-  if (target) {
-    return res.sendFile(target);
-  }
-  return res.redirect("/cpanel_public_html.zip");
-});
 app.get([
   "/cpanel_public_html.zip",
   "/public_html.zip",

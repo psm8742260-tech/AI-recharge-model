@@ -65,17 +65,15 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
 
             <div className="flex items-center gap-2">
-              <button 
-                onClick={() => setActiveTab('admin' as any)} 
-                className={`p-1.5 border rounded-lg transition-all shadow-md flex items-center justify-center ${
-                  user && user.isAdmin 
-                    ? 'bg-slate-900 border-cyan-500/50 text-cyan-400 animate-hybrid-engine-glow' 
-                    : 'bg-slate-900 border-slate-700 text-slate-300 hover:text-cyan-400 hover:border-cyan-500'
-                }`}
-                title="అడ్మిన్ మాస్టర్ ప్యానెల్ (Admin Panel)"
-              >
-                <Lock className="w-5 h-5 text-cyan-400" />
-              </button>
+              {user && user.isAdmin && (
+                <button 
+                  onClick={() => setActiveTab('admin' as any)} 
+                  className="p-1.5 border rounded-lg transition-all shadow-md flex items-center justify-center bg-slate-900 border-cyan-500/50 text-cyan-400 animate-hybrid-engine-glow cursor-pointer"
+                  title="అడ్మిన్ మాస్టర్ ప్యానెల్ (Admin Panel)"
+                >
+                  <Lock className="w-5 h-5 text-cyan-400" />
+                </button>
+              )}
               {user ? (
                 <>
                   <button 

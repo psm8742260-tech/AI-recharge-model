@@ -324,20 +324,7 @@ app.get('/api/admin/bundle-info', (req: Request, res: Response) => {
   }
 });
 
-// Standalone Download Page Route
-app.get(['/download.html', '/download'], (req: Request, res: Response) => {
-  const rootDir = process.cwd();
-  const fileCandidates = [
-    path.join(rootDir, 'public', 'download.html'),
-    path.join(rootDir, 'dist', 'download.html'),
-    path.join(rootDir, 'download.html')
-  ];
-  const target = fileCandidates.find(f => fs.existsSync(f));
-  if (target) {
-    return res.sendFile(target);
-  }
-  return res.redirect('/cpanel_public_html.zip');
-});
+
 
 // Export Complete cPanel & VPS Production Bundle ZIP Endpoint
 app.get([

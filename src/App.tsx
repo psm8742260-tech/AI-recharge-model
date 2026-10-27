@@ -18,6 +18,52 @@ import { Bot, Key, Sparkles, ShieldCheck, Heart, ArrowLeft } from 'lucide-react'
 
 import { getDisplayVersion } from './version';
 
+const DEFAULT_MASTER_ADMIN: UserAccount = {
+  id: 'usr_admin_master',
+  email: 'psm8742260@gmail.com',
+  name: 'Priya Sharma (Admin)',
+  mobile: '8466062260',
+  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+  activePlanId: 'plan-master',
+  activePlanName: 'Master Admin Unlimited Access',
+  planDurationMonths: 12,
+  dataPackMBTotal: 1024000,
+  dataPackMBRemaining: 1024000,
+  dailyLimitMB: 50000,
+  dailyUsedMB: 0,
+  lastResetDate: new Date().toISOString().split('T')[0],
+  expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+  activeApiKey: 'phrs-7f9a2d8e41bc90a57f9a2d8e41bc90a5',
+  isAdmin: true,
+  keysHistory: [
+    {
+      key: 'phrs-7f9a2d8e41bc90a57f9a2d8e41bc90a5',
+      createdAt: new Date().toISOString(),
+      status: 'active'
+    }
+  ]
+};
+
+const DEFAULT_USER: UserAccount = {
+  id: 'usr_guest',
+  email: 'user@airecharge.com',
+  name: 'AI Developer',
+  mobile: '',
+  avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+  activePlanId: 'plan-1m',
+  activePlanName: '1 Month Starter Pack',
+  planDurationMonths: 1,
+  dataPackMBTotal: 2048,
+  dataPackMBRemaining: 1840.25,
+  dailyLimitMB: 800,
+  dailyUsedMB: 0,
+  lastResetDate: new Date().toISOString().split('T')[0],
+  expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+  activeApiKey: 'phrs-user-demo-key',
+  isAdmin: false,
+  keysHistory: []
+};
+
 export default function App() {
   const [user, setUser] = useState<UserAccount | null>(() => {
     try {
@@ -28,10 +74,15 @@ export default function App() {
           return parsed;
         }
       }
+      const lastEmail = localStorage.getItem('airecharge_last_email') || '';
+      const lastMobile = localStorage.getItem('airecharge_last_mobile') || '';
+      if (lastEmail.toLowerCase() === 'psm8742260@gmail.com' || lastMobile === '8466062260') {
+        return DEFAULT_MASTER_ADMIN;
+      }
     } catch (e) {
       console.error('Failed to parse cached user:', e);
     }
-    return null;
+    return DEFAULT_USER;
   });
   const [receipts, setReceipts] = useState<MagicReceipt[]>([]);
   const [transactions, setTransactions] = useState<RechargeTransaction[]>([]);

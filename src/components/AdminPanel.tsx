@@ -1242,15 +1242,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
                     )}
                   </button>
 
-                  <a
-                    href="/download.html"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-2 rounded-lg bg-emerald-950/80 border border-emerald-500/50 hover:border-emerald-400 text-emerald-300 text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shadow-md"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>🌟 స్వతంత్ర డౌన్‌లోడ్ పేజీ (/download.html)</span>
-                  </a>
+
 
                   {onOpenExportZip && (
                     <button
