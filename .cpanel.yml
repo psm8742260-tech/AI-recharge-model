@@ -1,7 +1,7 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/phrscrow/public_html/arm.phrscrowd.online/
+    - export DEPLOYPATH=/home/phrscrow/arm.phrscrowd.online/
     - /bin/mkdir -p $DEPLOYPATH
     - /bin/mkdir -p $DEPLOYPATH/tmp
     - /bin/cp -R dist/* $DEPLOYPATH 2>/dev/null || /bin/cp -R * $DEPLOYPATH

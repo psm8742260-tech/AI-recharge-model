@@ -38,5 +38,5 @@ jobs:
           username: ${{ secrets.FTP_USERNAME || 'phrscrow' }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./
-          server-dir: ${{ secrets.FTP_SERVER_DIR || '/public_html/arm.phrscrowd.online/' }}
+          server-dir: ${{ secrets.FTP_SERVER_DIR || '/arm.phrscrowd.online/' }}
           dangerous-clean-slate: false
