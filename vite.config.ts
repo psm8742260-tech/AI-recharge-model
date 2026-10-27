@@ -12,6 +12,10 @@ export default defineConfig(() => {
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+        workbox: {
+          navigateFallbackDenylist: [/^\/.*\.zip$/, /^\/api\/.*$/],
+          globIgnores: ['**/*.zip', 'cpanel_public_html.zip', 'cpanel-bundle.zip']
+        },
         manifest: {
           name: 'AI Recharge Models Gateway',
           short_name: 'AI Recharge',

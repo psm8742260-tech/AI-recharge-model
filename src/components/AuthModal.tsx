@@ -98,6 +98,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
           return;
         }
       }
+      throw new Error(`API Endpoint Returned Status ${res.status}`);
     } catch (err) {
       clearTimeout(timeoutId);
       console.warn('Backend server auth endpoint unavailable or static hosting mode, using instant client fallback:', err);

@@ -100,7 +100,95 @@ interface RechargeTransaction {
   paymentMethod: string;
 }
 
-import { SUBSCRIPTION_PLANS, TOP_UP_PACKS } from './src/data/plansData.js';
+const SUBSCRIPTION_PLANS = [
+  {
+    id: 'plan-1m',
+    name: '1 Month Starter Pack',
+    durationMonths: 1,
+    durationDays: 30,
+    priceINR: 399,
+    priceUSD: 4.99,
+    dataPackMB: 2048,
+    dataPackGB: 2.0,
+    dailyLimitMB: 800,
+    badge: 'Starter',
+    features: [
+      '2 GB Total High-Speed AI Data Pack',
+      '800 MB Daily High-Speed Usage Limit',
+      'Access to ALL 26 AI Models',
+      'Instant Gateway Auto-Activation',
+      'Reverse Proxy Gateway Access',
+      'Live Token-to-MB Magic Receipts'
+    ]
+  },
+  {
+    id: 'plan-2m',
+    name: '2 Months Pro Pack',
+    durationMonths: 2,
+    durationDays: 60,
+    priceINR: 699,
+    priceUSD: 8.49,
+    dataPackMB: 5120,
+    dataPackGB: 5.0,
+    dailyLimitMB: 1200,
+    popular: true,
+    badge: 'Most Popular',
+    features: [
+      '5 GB Total High-Speed AI Data Pack',
+      '1.2 GB Daily High-Speed Usage Limit',
+      'Access to ALL 26 AI Models',
+      'Instant Gateway Auto-Activation',
+      'Priority Gateway Bandwidth',
+      'Live Token-to-MB Magic Receipts',
+      '24/7 Priority Gateway Proxy Routing'
+    ]
+  },
+  {
+    id: 'plan-3m',
+    name: '3 Months Ultra Pack',
+    durationMonths: 3,
+    durationDays: 90,
+    priceINR: 999,
+    priceUSD: 11.99,
+    dataPackMB: 10240,
+    dataPackGB: 10.0,
+    dailyLimitMB: 2048,
+    badge: 'Best Value',
+    features: [
+      '10 GB Total High-Speed AI Data Pack',
+      '2 GB Daily High-Speed Usage Limit',
+      'Access to ALL 26 AI Models (Including o1, Opus & Brahmastra)',
+      'Instant Gateway Auto-Activation',
+      'Unlimited Key Regeneration',
+      'Live Token-to-MB Magic Receipts',
+      'Dedicated Gateway Channel'
+    ]
+  }
+];
+
+const TOP_UP_PACKS = [
+  {
+    id: 'topup-500mb',
+    name: 'Micro Recharge Top-Up',
+    priceINR: 99,
+    dataMB: 500,
+    description: 'Instantly add 500 MB data pack to your active subscription without changing validity.'
+  },
+  {
+    id: 'topup-1gb',
+    name: 'Standard Recharge Top-Up',
+    priceINR: 179,
+    dataMB: 1024,
+    description: 'Add 1 GB high-speed AI model data pack to your current key.'
+  },
+  {
+    id: 'topup-3gb',
+    name: 'Mega Recharge Top-Up',
+    priceINR: 349,
+    dataMB: 3072,
+    description: 'Add 3 GB high-speed AI model data pack to your current key.'
+  }
+];
 
 const DB_FILE = path.resolve(process.cwd(), 'server_store.json');
 
@@ -236,18 +324,48 @@ app.get('/api/admin/bundle-info', (req: Request, res: Response) => {
   }
 });
 
+// Standalone Download Page Route
+app.get(['/download.html', '/download'], (req: Request, res: Response) => {
+  const rootDir = process.cwd();
+  const fileCandidates = [
+    path.join(rootDir, 'public', 'download.html'),
+    path.join(rootDir, 'dist', 'download.html'),
+    path.join(rootDir, 'download.html')
+  ];
+  const target = fileCandidates.find(f => fs.existsSync(f));
+  if (target) {
+    return res.sendFile(target);
+  }
+  return res.redirect('/cpanel_public_html.zip');
+});
+
 // Export Complete cPanel & VPS Production Bundle ZIP Endpoint
-app.get(['/cpanel-bundle.zip', '/airecharge-cpanel-bundle.zip', '/api/export-zip', '/api/download-bundle', '/api/download-cpanel-bundle'], async (req: Request, res: Response) => {
+app.get([
+  '/cpanel_public_html.zip',
+  '/public_html.zip',
+  '/cpanel-bundle.zip',
+  '/airecharge-cpanel-bundle.zip',
+  '/api/export-zip',
+  '/api/download-bundle',
+  '/api/download-cpanel-bundle',
+  '/api/download-public-html'
+], async (req: Request, res: Response) => {
   try {
     const rootDir = process.cwd();
-    const rootBundle = path.join(rootDir, 'cpanel-bundle.zip');
-    const distBundle = path.join(rootDir, 'dist', 'cpanel-bundle.zip');
-    const publicBundle = path.join(rootDir, 'public', 'cpanel-bundle.zip');
-    const targetBundle = fs.existsSync(rootBundle) ? rootBundle : (fs.existsSync(distBundle) ? distBundle : (fs.existsSync(publicBundle) ? publicBundle : null));
+    const candidateFiles = [
+      path.join(rootDir, 'cpanel_public_html.zip'),
+      path.join(rootDir, 'cpanel-bundle.zip'),
+      path.join(rootDir, 'public', 'cpanel_public_html.zip'),
+      path.join(rootDir, 'public', 'cpanel-bundle.zip'),
+      path.join(rootDir, 'dist', 'cpanel_public_html.zip'),
+      path.join(rootDir, 'dist', 'cpanel-bundle.zip')
+    ];
+    const targetBundle = candidateFiles.find((f) => fs.existsSync(f));
 
     if (targetBundle) {
       res.setHeader('Content-Type', 'application/zip');
-      res.setHeader('Content-Disposition', 'attachment; filename="airecharge-cpanel-bundle.zip"');
+      res.setHeader('Content-Disposition', 'attachment; filename="cpanel_public_html.zip"');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       return res.sendFile(targetBundle);
     }
 

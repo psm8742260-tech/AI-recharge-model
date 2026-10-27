@@ -51,7 +51,7 @@ function addDirectoryToZip(dirPath, zipFolder) {
   if (!fs.existsSync(dirPath)) return;
   const items = fs.readdirSync(dirPath);
   for (const item of items) {
-    if (item === 'node_modules' || item === '.git' || item.endsWith('.zip')) continue;
+    if (item === 'node_modules' || item === '.git' || item.endsWith('.zip') || item === 'aistudio') continue;
     const fullPath = path.join(dirPath, item);
     const stat = fs.statSync(fullPath);
     if (stat.isDirectory()) {
@@ -85,13 +85,17 @@ async function main() {
   const rootFiles = [
     'server.js',
     'server.ts',
+    'app.js',
     'package.json',
+    'package-lock.json',
+    '.cpanel.yml',
     'server_store.json',
     'tsconfig.json',
     'vite.config.ts',
     'index.html',
     '.env.example',
     'deploy-vps.sh',
+    'update-vps.sh',
     'cPanel_Setup_Guide.txt',
     'README_CPANEL_TELUGU.txt'
   ];
@@ -126,12 +130,15 @@ async function main() {
 
   const publicZip = path.join(publicDir, 'cpanel-bundle.zip');
   fs.writeFileSync(publicZip, buffer);
-  console.log(`Saved ${publicZip} (${(buffer.length / 1024 / 1024).toFixed(2)} MB)`);
+  fs.writeFileSync(path.join(publicDir, 'airecharge-cpanel-bundle.zip'), buffer);
+  fs.writeFileSync(path.join(rootDir, 'cpanel-bundle.zip'), buffer);
+  fs.writeFileSync(path.join(rootDir, 'airecharge-cpanel-bundle.zip'), buffer);
+
+  console.log(`Saved cpanel-bundle.zip (${(buffer.length / 1024 / 1024).toFixed(2)} MB) to root and public/`);
 
   if (fs.existsSync(distDir)) {
     const distZip = path.join(distDir, 'cpanel-bundle.zip');
     fs.writeFileSync(distZip, buffer);
-    console.log(`Saved ${distZip}`);
   }
 }
 

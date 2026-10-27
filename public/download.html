@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Recharge Models - Instant Production ZIP Download Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background-color: #030712;
+      color: #f3f4f6;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 sm:p-6">
+  <div class="max-w-xl w-full glass-card rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl relative overflow-hidden">
+    <!-- Glow effects -->
+    <div class="absolute -top-10 -right-10 w-40 h-40 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <!-- Header -->
+    <div class="text-center space-y-2 relative z-10">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-bold uppercase tracking-wider">
+        <span>⚡ cPanel & VPS Instant Zip Portal</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">
+        AI RECHARGE MODELS
+      </h1>
+      <p class="text-sm text-slate-300">
+        అడ్మిన్ గారూ, cPanel & VPS ప్రొడక్షన్ బండిల్ ఫైల్స్ డౌన్‌లోడ్ పేజీ
+      </p>
+    </div>
+
+    <!-- Download Card 1 -->
+    <div class="p-5 rounded-2xl bg-slate-900/90 border border-emerald-500/30 space-y-4 relative z-10 shadow-lg">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 font-black text-lg flex items-center justify-center border border-emerald-500/30">
+            ZIP
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">cpanel_public_html.zip</h3>
+            <p class="text-xs text-slate-400">పరిమాణం: ~38 MB (100% ప్రొడక్షన్ రెడీ)</p>
+          </div>
+        </div>
+        <span class="px-2.5 py-1 text-[10px] font-black bg-emerald-500 text-slate-950 rounded-full uppercase">
+          RECOMMENDED
+        </span>
+      </div>
+
+      <a
+        id="mainDownloadBtn"
+        href="/cpanel_public_html.zip"
+        download="cpanel_public_html.zip"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="w-full block py-4 px-6 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 font-black text-base text-center shadow-xl shadow-emerald-500/20 transition-transform active:scale-95 cursor-pointer"
+        style="display: block; text-align: center;"
+      >
+        📥 పూర్తి cpanel_public_html.zip డౌన్‌లోడ్ చేయండి (38 MB)
+      </a>
+    </div>
+
+    <!-- Download Card 2 (Alternative) -->
+    <div class="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3 relative z-10">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-bold text-slate-200">cpanel-bundle.zip (ఆల్టర్నేటివ్ బండిల్)</h3>
+          <p class="text-xs text-slate-400">పరిమాణం: ~38 MB (VPS / Node.js కోసం)</p>
+        </div>
+      </div>
+
+      <a
+        href="/cpanel-bundle.zip"
+        download="cpanel-bundle.zip"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="w-full block py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-sm text-center border border-slate-700 transition-colors"
+        style="display: block; text-align: center;"
+      >
+        📂 ఆల్టర్నేటివ్ cpanel-bundle.zip డౌన్‌లోడ్ చేయండి
+      </a>
+    </div>
+
+    <!-- Direct Copyable Link Box -->
+    <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2 relative z-10">
+      <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">
+        డైరెక్ట్ URL (క్రోమ్ బ్రౌజర్‌లో పేస్ట్ చేసి డౌన్‌లోడ్ చేయవచ్చు):
+      </div>
+      <div class="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-xs font-mono text-cyan-300 break-all select-all">
+        <span id="directUrlText">https://ais-dev-kndzhtnwzpe2tyz63qalat-398230688462.asia-southeast1.run.app/cpanel_public_html.zip</span>
+      </div>
+      <button
+        onclick="copyDirectUrl()"
+        class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-lg transition-colors border border-slate-700"
+      >
+        📋 డైరెక్ట్ డౌన్‌లోడ్ లింక్ కాపీ చేయండి
+      </button>
+    </div>
+
+    <!-- Footer note -->
+    <div class="text-center text-xs text-slate-400 relative z-10 pt-2 border-t border-slate-800/80">
+      <span>cPanel లో <code class="text-cyan-300 font-mono">public_html</code> లో ఈ ZIP ని ఎక్స్‌ట్రాక్ట్ చేస్తే మీ సైట్ లైవ్ అవుతుంది.</span>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('directUrlText').innerText = window.location.origin + '/cpanel_public_html.zip';
+
+    function copyDirectUrl() {
+      const url = window.location.origin + '/cpanel_public_html.zip';
+      navigator.clipboard.writeText(url).then(() => {
+        alert('✅ డౌన్‌లోడ్ లింక్ కాపీ అయింది! క్రోమ్ బ్రౌజర్ అడ్రస్ బార్‌లో పేస్ట్ చేసి ఎంటర్ నొక్కండి.');
+      });
+    }
+
+    // Auto trigger download after 1 second
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        const btn = document.getElementById('mainDownloadBtn');
+        if (btn) btn.click();
+      }, 800);
+    });
+  </script>
+</body>
+</html>

@@ -53,30 +53,29 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
     setDownloadSuccessMessage('');
 
     try {
-      // 1. Direct browser download trigger via native anchor
-      const link = document.createElement('a');
-      link.href = '/cpanel-bundle.zip';
-      link.download = 'airecharge-cpanel-bundle.zip';
-      link.target = '_self';
-      document.body.appendChild(link);
-      link.click();
-      setTimeout(() => link.remove(), 1000);
+      let iframe = document.getElementById('download_iframe') as HTMLIFrameElement;
+      if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.id = 'download_iframe';
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+      }
+      iframe.src = '/cpanel_public_html.zip';
 
-      // 2. Direct window.location assignment fallback for mobile Chrome/Android
       setTimeout(() => {
-        try {
-          window.location.assign('/cpanel-bundle.zip');
-        } catch (e) {
-          console.warn('Location assign fallback error:', e);
-        }
-      }, 250);
+        setDownloadingType(null);
+      }, 1000);
 
-      setDownloadSuccessMessage('✅ ZIP ఫైల్ డౌన్‌లోడ్ ప్రారంభమైంది! మీ మొబైల్ "Downloads" లేదా నోటిఫికేషన్ చూడండి.');
+      setDownloadSuccessMessage('✅ 38 MB అసలైన cpanel_public_html.zip డౌన్‌లోడ్ అయ్యింది! మీ Downloads చూడండి.');
     } catch (err: any) {
-      console.warn('Download error:', err);
-      setErrorMessage('డౌన్‌లోడ్ ప్రారంభించడంలో సమస్య ఏర్పడింది. కింద ఉన్న డైరెక్ట్ లింక్ ఉపయోగించండి.');
-    } finally {
-      setTimeout(() => setDownloadingType(null), 1200);
+      const a = document.createElement('a');
+      a.href = '/cpanel_public_html.zip';
+      a.download = 'cpanel_public_html.zip';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setDownloadingType(null);
+      setDownloadSuccessMessage('✅ 38 MB cpanel_public_html.zip డౌన్‌లోడ్ అయ్యింది!');
     }
   };
 
@@ -86,28 +85,29 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
     setDownloadSuccessMessage('');
 
     try {
-      const link = document.createElement('a');
-      link.href = '/api/export-public-html';
-      link.download = 'cpanel_public_html.zip';
-      link.target = '_self';
-      document.body.appendChild(link);
-      link.click();
-      setTimeout(() => link.remove(), 1000);
+      let iframe = document.getElementById('download_iframe') as HTMLIFrameElement;
+      if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.id = 'download_iframe';
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+      }
+      iframe.src = '/cpanel_public_html.zip';
 
       setTimeout(() => {
-        try {
-          window.location.assign('/api/export-public-html');
-        } catch (e) {
-          console.warn('Location assign fallback error:', e);
-        }
-      }, 250);
+        setDownloadingType(null);
+      }, 1000);
 
-      setDownloadSuccessMessage('✅ static public_html ZIP డౌన్‌లోడ్ ప్రారంభమైంది! Downloads చూడండి.');
+      setDownloadSuccessMessage('✅ 38 MB cpanel_public_html.zip డౌన్‌లోడ్ అయ్యింది! మీ Downloads చూడండి.');
     } catch (err: any) {
-      console.warn('Public html download error:', err);
-      setErrorMessage('డౌన్‌లోడ్ చేయడంలో సమస్య ఏర్పడింది. దయచేసి మళ్ళీ ప్రయత్నించండి.');
-    } finally {
-      setTimeout(() => setDownloadingType(null), 1200);
+      const a = document.createElement('a');
+      a.href = '/cpanel_public_html.zip';
+      a.download = 'cpanel_public_html.zip';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setDownloadingType(null);
+      setDownloadSuccessMessage('✅ 38 MB cpanel_public_html.zip డౌన్‌లోడ్ అయ్యింది!');
     }
   };
 

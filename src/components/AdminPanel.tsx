@@ -51,9 +51,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
 
   // Tab 6 cPanel Export States
   const [isDownloadingZip, setIsDownloadingZip] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState<string | null>(null);
   const [copiedZipUrl, setCopiedZipUrl] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
-  const [bundleSize, setBundleSize] = useState('36.5 MB');
+  const [bundleSize, setBundleSize] = useState('37.2 MB');
   const [copiedSecretKey, setCopiedSecretKey] = useState<string | null>(null);
 
   const handleCopyText = (text: string, keyId: string) => {
@@ -67,27 +68,29 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
     setDownloadSuccess(false);
 
     try {
-      const link = document.createElement('a');
-      link.href = '/cpanel-bundle.zip';
-      link.download = 'airecharge-cpanel-bundle.zip';
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (e) {
-      console.error('Download error:', e);
-      window.location.assign('/cpanel-bundle.zip');
-    }
+      const fullUrl = `${window.location.origin}/cpanel_public_html.zip`;
+      
+      // 1. Trigger window.open to bypass iframe sandbox restriction
+      const newWin = window.open(fullUrl, '_blank');
+      if (!newWin) {
+        // 2. Fallback to top location
+        window.location.href = fullUrl;
+      }
 
-    setTimeout(() => {
+      setTimeout(() => {
+        setIsDownloadingZip(false);
+        setDownloadSuccess(true);
+        setTimeout(() => setDownloadSuccess(false), 5000);
+      }, 1000);
+    } catch (e) {
+      window.location.href = '/cpanel_public_html.zip';
       setIsDownloadingZip(false);
       setDownloadSuccess(true);
-      setTimeout(() => setDownloadSuccess(false), 5000);
-    }, 1200);
+    }
   };
 
   const handleCopyZipUrl = () => {
-    const fullUrl = `${window.location.origin}/cpanel-bundle.zip`;
+    const fullUrl = `${window.location.origin}/cpanel_public_html.zip`;
     navigator.clipboard.writeText(fullUrl).then(() => {
       setCopiedZipUrl(true);
       setTimeout(() => setCopiedZipUrl(false), 3000);
@@ -1184,7 +1187,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
                     type="button"
                     onClick={handleDownloadZip}
                     disabled={isDownloadingZip}
-                    className="px-5 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black text-sm shadow-xl shadow-emerald-500/25 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    className="px-6 py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black text-sm shadow-xl shadow-emerald-500/25 transition-all active:scale-95 flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-80"
                   >
                     {isDownloadingZip ? (
                       <>
@@ -1194,26 +1197,26 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
                     ) : downloadSuccess ? (
                       <>
                         <CheckCircle2 className="w-5 h-5 text-slate-950" />
-                        <span>డౌన్‌లోడ్ ప్రారంభమైంది! ({bundleSize})</span>
+                        <span>✅ cpanel_public_html.zip (38 MB) డౌన్‌లోడ్ అయింది!</span>
                       </>
                     ) : (
                       <>
                         <Download className="w-5 h-5" />
-                        <span>పూర్తి జిప్ డౌన్‌లోడ్ ({bundleSize} public_html ZIP)</span>
+                        <span>పూర్తి cpanel_public_html.zip (38 MB)</span>
                       </>
                     )}
                   </button>
 
                   <a
-                    href="/cpanel-bundle.zip"
-                    download="airecharge-cpanel-bundle.zip"
+                    href="/cpanel_public_html.zip"
+                    download="cpanel_public_html.zip"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-4 py-3 rounded-xl bg-slate-800/80 hover:bg-slate-750 text-cyan-300 font-bold text-xs border border-slate-700 flex items-center justify-center gap-2 transition-all shadow-md text-center"
-                    title="బ్రౌజర్ డైరెక్ట్ లింక్"
+                    className="px-4 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-xs border border-slate-700 flex items-center justify-center gap-2 transition-all shadow-md text-center cursor-pointer"
+                    title="డైరెక్ట్ లింక్ డౌన్‌లోడ్"
                   >
-                    <FolderDown className="w-4 h-4" />
-                    <span>డైరెక్ట్ సేవ్</span>
+                    <FolderDown className="w-4 h-4 text-cyan-400" />
+                    <span>డైరెక్ట్ సేవ్ (38 MB)</span>
                   </a>
                 </div>
               </div>
@@ -1239,6 +1242,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
                     )}
                   </button>
 
+                  <a
+                    href="/download.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-2 rounded-lg bg-emerald-950/80 border border-emerald-500/50 hover:border-emerald-400 text-emerald-300 text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shadow-md"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>🌟 స్వతంత్ర డౌన్‌లోడ్ పేజీ (/download.html)</span>
+                  </a>
+
                   {onOpenExportZip && (
                     <button
                       type="button"
@@ -1258,99 +1271,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
               </div>
             </div>
 
-            {/* Step-by-Step cPanel Deployment Guide */}
-            <div className="p-6 sm:p-8 rounded-3xl glass-panel space-y-6 border-slate-800">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center shrink-0">
-                  <Settings className="w-5 h-5 text-cyan-400" />
-                </div>
-                <div>
-                  <h4 className="text-base font-extrabold text-white">
-                    cPanel లో ఇన్‌స్టాల్ చేసే విధానం (Installation Steps)
-                  </h4>
-                  <p className="text-xs text-slate-400">
-                    హోస్టింగ్‌లో ఈ 4 స్టెప్స్ పూర్తి చేస్తే మీ వెబ్‌సైట్ లైవ్ అవుతుంది.
-                  </p>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 flex items-start gap-3">
-                  <div className="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-400 font-mono font-black text-xs flex items-center justify-center shrink-0">
-                    1
-                  </div>
-                  <div>
-                    <h5 className="text-xs font-bold text-white">జిప్ ఫైల్ డౌన్‌లోడ్ చేయండి</h5>
-                    <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
-                      పైనున్న <span className="text-emerald-400 font-semibold">"జిప్ డౌన్‌లోడ్ చేయండి"</span> బటన్ నొక్కి <code className="text-cyan-300 text-[10px]">airecharge-cpanel-bundle.zip</code> ఫైల్‌ను మీ ఫోన్ లేదా కంప్యూటర్‌లో సేవ్ చేసుకోండి.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 flex items-start gap-3">
-                  <div className="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-400 font-mono font-black text-xs flex items-center justify-center shrink-0">
-                    2
-                  </div>
-                  <div>
-                    <h5 className="text-xs font-bold text-white">cPanel File Manager ఓపెన్ చేయండి</h5>
-                    <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
-                      మీ హోస్టింగ్ ప్రొవైడర్ (Hostinger, cPanel, GoDaddy మొదలైనవి) డాష్‌బోర్డ్‌లో లాగిన్ అయి <span className="text-white font-semibold">File Manager</span> ఓపెన్ చేసి <span className="text-cyan-400 font-semibold">public_html</span> డైరెక్టరీకి వెళ్ళండి.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 flex items-start gap-3">
-                  <div className="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-400 font-mono font-black text-xs flex items-center justify-center shrink-0">
-                    3
-                  </div>
-                  <div>
-                    <h5 className="text-xs font-bold text-white">అప్‌లోడ్ & ఎక్స్‌ట్రాక్ట్ (Extract) చేయండి</h5>
-                    <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
-                      <span className="text-cyan-400 font-semibold">Upload</span> ఆప్షన్ ద్వారా జిప్ ఫైల్‌ను public_html లో అప్‌లోడ్ చేసి, దానిపై రైట్ క్లిక్ చేసి <span className="text-emerald-400 font-semibold">"Extract"</span> చేయండి.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 flex items-start gap-3">
-                  <div className="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-400 font-mono font-black text-xs flex items-center justify-center shrink-0">
-                    4
-                  </div>
-                  <div>
-                    <h5 className="text-xs font-bold text-white">సైట్ లైవ్ వెరిఫికేషన్</h5>
-                    <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
-                      ఎక్స్‌ట్రాక్ట్ అయిన తర్వాత మీ డొమైన్ పేరును బ్రౌజర్‌లో ఓపెన్ చేయండి. AI Recharge Models మరియు అడ్మిన్ ప్యానెల్ వెంటనే పనిచేస్తుంది.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Package Details Box */}
-              <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
-                <h5 className="text-xs font-extrabold text-slate-300 uppercase tracking-wider mb-3">
-                  ఈ బండిల్‌లోని ముఖ్యమైన ఫైల్స్:
-                </h5>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] text-slate-400 font-mono">
-                  <div className="flex items-center gap-1.5 p-2 rounded bg-slate-950/40 border border-slate-800/60">
-                    <span className="text-emerald-400 font-bold">✓</span> index.html (SPA Entry)
-                  </div>
-                  <div className="flex items-center gap-1.5 p-2 rounded bg-slate-950/40 border border-slate-800/60">
-                    <span className="text-emerald-400 font-bold">✓</span> .htaccess (Apache Rules)
-                  </div>
-                  <div className="flex items-center gap-1.5 p-2 rounded bg-slate-950/40 border border-slate-800/60">
-                    <span className="text-emerald-400 font-bold">✓</span> assets/ (JS, CSS, Images)
-                  </div>
-                  <div className="flex items-center gap-1.5 p-2 rounded bg-slate-950/40 border border-slate-800/60">
-                    <span className="text-emerald-400 font-bold">✓</span> server.ts (Express Gateway)
-                  </div>
-                  <div className="flex items-center gap-1.5 p-2 rounded bg-slate-950/40 border border-slate-800/60">
-                    <span className="text-emerald-400 font-bold">✓</span> manifest.json (PWA App)
-                  </div>
-                  <div className="flex items-center gap-1.5 p-2 rounded bg-slate-950/40 border border-slate-800/60">
-                    <span className="text-emerald-400 font-bold">✓</span> sw.js (Offline Service)
-                  </div>
-                </div>
-              </div>
-            </div>
 
             {/* GitHub to cPanel Auto-Deployment (CI/CD) Section */}
             <div className="p-6 sm:p-8 rounded-3xl glass-panel space-y-6 border border-cyan-500/20 bg-gradient-to-br from-slate-900/90 via-slate-950/90 to-cyan-950/20 relative overflow-hidden">
@@ -1507,43 +1428,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
                   <div>
                     <span className="font-bold text-cyan-100">గమనిక:</span> మీ ప్రాజెక్ట్‌లో <code className="text-cyan-300 font-mono">.github/workflows/deploy.yml</code> మరియు cPanel Git కోసం <code className="text-cyan-300 font-mono">.cpanel.yml</code> ఇప్పటికే పర్ఫెక్ట్‌గా సిద్ధం చేయబడ్డాయి. మీరు కేవలం మీ cPanel పాస్‌వర్డ్ <code className="text-cyan-300 font-mono">FTP_PASSWORD</code> గా ఇస్తే చాలు, ప్రతి పుష్ ఆటోమేటిక్‌గా సర్వర్‌కి చేరుతుంది!
                   </div>
-                </div>
-
-                {/* Node.js Selector Setup Guide Card */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-slate-900 border-2 border-emerald-500/30 space-y-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                      <Server className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h5 className="text-sm font-bold text-white flex items-center gap-2">
-                        cPanel "Setup Node.js App" కాన్ఫిగరేషన్
-                        <span className="text-[9px] px-2 py-0.5 bg-emerald-500 text-slate-950 font-black rounded-full">NODE.JS READY</span>
-                      </h5>
-                      <p className="text-[11px] text-slate-400">
-                        సర్వర్‌లో Node.js సెలెక్టర్‌తో బ్యాకెండ్ రన్ చేసేందుకు క్రింది వివరాలు ఇవ్వండి:
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
-                    <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
-                      <span className="text-[10px] text-slate-400 font-bold block">Application startup file</span>
-                      <code className="text-emerald-400 font-mono font-black text-xs">app.js</code>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
-                      <span className="text-[10px] text-slate-400 font-bold block">Node.js Version</span>
-                      <code className="text-cyan-300 font-mono font-bold text-xs">20.x లేదా 18.x</code>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
-                      <span className="text-[10px] text-slate-400 font-bold block">Application Mode</span>
-                      <code className="text-emerald-400 font-mono font-bold text-xs">Production</code>
-                    </div>
-                  </div>
-
-                  <p className="text-[10px] text-slate-400">
-                    💡 GitHub నుండి కోడ్ రాగానే <code className="text-cyan-300 font-mono">tmp/restart.txt</code> ఆటోమేటిక్‌గా అప్‌డేట్ అవుతుంది, దీనివల్ల cPanel Node.js సర్వర్ ఎలాంటి మాన్యువల్ రీస్టార్ట్ లేకుండా ఆటోమేటిక్‌గా కొత్త కోడ్‌ను తీసుకుంటుంది!
-                  </p>
                 </div>
               </div>
             </div>
