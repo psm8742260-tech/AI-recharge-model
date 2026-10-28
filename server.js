@@ -129,9 +129,9 @@ var DB_FILE = path.resolve(process.cwd(), "server_store.json");
 var defaultUser = {
   id: "usr_demo_8829",
   email: "psm8742260@gmail.com",
-  name: "Priya Sharma",
+  name: "Purushotham",
   mobile: "8466062260",
-  avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+  avatar: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150",
   activePlanId: "plan-1m",
   activePlanName: "1 Month Starter Pack",
   planDurationMonths: 1,
@@ -465,7 +465,12 @@ app.post("/api/admin/config", (req, res) => {
 app.get("/api/plans", (req, res) => {
   res.json({
     plans: store.plans,
-    topups: store.topups
+    topups: store.topups,
+    config: {
+      isPaymentEnabled: store.systemConfig.isPaymentEnabled,
+      qrCodeUrl: store.systemConfig.qrCodeUrl,
+      upiId: store.systemConfig.upiId
+    }
   });
 });
 app.post("/api/admin/plans", (req, res) => {
@@ -546,9 +551,9 @@ app.post("/api/auth/login", (req, res) => {
     user = {
       id: isFinalAdmin ? "usr_admin_master" : `usr_${Date.now()}`,
       email: cleanEmail || (cleanMobile ? `${cleanMobile}@airecharge.user` : "user@airecharge.com"),
-      name: isFinalAdmin ? "Priya Sharma (Admin)" : name || (cleanEmail ? cleanEmail.split("@")[0] : `User ${cleanMobile.slice(-4)}`),
+      name: isFinalAdmin ? "Purushotham (Admin)" : name || (cleanEmail ? cleanEmail.split("@")[0] : `User ${cleanMobile.slice(-4)}`),
       mobile: cleanMobile || (isFinalAdmin ? "8466062260" : ""),
-      avatar: isFinalAdmin ? "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
+      avatar: isFinalAdmin ? "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150" : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
       activePlanId: isFinalAdmin ? "plan-master" : "plan-1m",
       activePlanName: isFinalAdmin ? "Master Admin Unlimited Access" : "1 Month Starter Pack",
       planDurationMonths: isFinalAdmin ? 12 : 1,

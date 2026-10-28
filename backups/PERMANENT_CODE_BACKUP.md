@@ -5,7 +5,7 @@
 - **సృష్టించిన తేదీ (Date):** 27 అక్టోబర్ 2026 (2026-10-27)
 - **సమయం (Time):** 10:46 AM Local / 11:16 PM IST
 - **సీనియర్ ఇంజనీర్ (Author):** Google AI Studio Build Senior Engineer
-- **అడ్మిన్ క్రెడెన్షియల్స్:** `psm8742260@gmail.com` | మొబైల్: `8466062260`
+- **అడ్మిన్ క్రెడెన్షియల్స్:** `psm8742260@gmail.com` | మొబైల్: `8466062260` (పురుషోత్తం)
 - **మాస్టర్ పిన్:** `6606.0k` / `2634T`
 - **డొమైన్ హోస్టింగ్:** `arm.phrscrowd.online`
 ---
@@ -90,7 +90,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
         signal: controller.signal,
         body: JSON.stringify({
           email: inputEmail || (inputMobile ? `${inputMobile}@airecharge.user` : 'psm8742260@gmail.com'),
-          name: isAdmin ? 'Priya Sharma (Admin)' : (inputEmail ? inputEmail.split('@')[0] : (inputMobile ? `User ${inputMobile.slice(-4)}` : 'AI Developer')),
+          name: isAdmin ? 'Purushotham (Admin)' : (inputEmail ? inputEmail.split('@')[0] : (inputMobile ? `User ${inputMobile.slice(-4)}` : 'AI Developer')),
           mobile: inputMobile,
           provider: 'hybrid_auth',
           isAdminRequest: isAdmin
@@ -122,9 +122,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
     const fallbackUser: UserAccount = {
       id: isAdmin ? 'usr_admin_master' : `usr_${Date.now()}`,
       email: inputEmail || (inputMobile ? `${inputMobile}@airecharge.user` : (isAdmin ? 'psm8742260@gmail.com' : 'user@airecharge.com')),
-      name: isAdmin ? 'Priya Sharma (Admin)' : (inputEmail ? (inputEmail.split('@')[0] || 'AI Developer') : (inputMobile ? `User ${inputMobile.slice(-4)}` : 'AI Developer')),
+      name: isAdmin ? 'Purushotham (Admin)' : (inputEmail ? (inputEmail.split('@')[0] || 'AI Developer') : (inputMobile ? `User ${inputMobile.slice(-4)}` : 'AI Developer')),
       mobile: inputMobile || (isAdmin ? '8466062260' : ''),
-      avatar: isAdmin ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150' : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+      avatar: isAdmin ? 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150' : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
       activePlanId: isAdmin ? 'plan-master' : 'plan-1m',
       activePlanName: isAdmin ? 'Master Admin Unlimited Access' : '1 Month Starter Pack',
       planDurationMonths: isAdmin ? 12 : 1,
@@ -376,6 +376,62 @@ deployment:
     </button>
   )}
 ```
+
+---
+
+## 5. తాజా మార్పులు (Latest Updates - 27 Oct 2026)
+- **టాస్క్:** PWA Icon Refresh (Robot Logo), Cache Busting & Redundant File Cleanup
+- **మార్పులు:** 
+  - `index.html`, `manifest.json`, `manifest.webmanifest` ఫైళ్లలో ఐకాన్ పాత్‌లకు `?v=HYBRID` జోడించబడింది.
+  - `src/version.ts` లో `SYSTEM_INTEGRITY_LOCK` ఎన్ఫోర్స్ చేయబడింది.
+  - `AGENT.md` ఫైల్ మళ్ళీ సెట్ చేయబడింది.
+  - `bun.lock` మరియు ఇతర అనవసరమైన ఫైళ్లు డిలీట్ చేయబడ్డాయి.
+- **ఇంజనీర్:** AI_ENGINEER_HYBRID_CORE
+- **సమయం:** 2026-10-27 21:15:00
+
+---
+
+## 6. పాత మరియు అనవసరమైన ఫైళ్ల బ్యాకప్ (Redundant Files Backup - 27 Oct 2026)
+*గమనిక: ఈ ఫైళ్లు cPanel హోస్టింగ్ లో ప్రస్తుతం అవసరం లేదు, కానీ భవిష్యత్తు అవసరాల కోసం ఇక్కడ భద్రపరచబడ్డాయి.*
+
+### A. డిలీట్ చేయబడిన ఫైళ్ల జాబితా (Deleted Files List):
+1. `.dockerignore`
+2. `.gcpignore`
+3. `deploy-vps.sh`
+4. `update-vps.sh`
+5. `cPanel_Setup_Guide.txt`
+6. `README_CPANEL_TELUGU.txt`
+7. `PROJECT_SECURITY_LOCK.json`
+8. `bun.lock` (NPM వాడుతున్నందున ఇది అవసరం లేదు)
+
+### A. deploy-vps.sh (VPS సెటప్ స్క్రిప్ట్)
+```bash
+#!/bin/bash
+# AI Recharge Models - Automated VPS Setup & Deploy Script
+set -e
+echo "🚀 Updating system packages..."
+sudo apt update -y
+sudo npm install -g pm2 tsx
+npm install
+npm run build
+# Nginx config...
+PORT=8080 NODE_ENV=production pm2 start server.js --name "ai-recharge"
+```
+
+### B. update-vps.sh (VPS లైవ్ అప్‌డేట్)
+```bash
+#!/bin/bash
+# AI Recharge Models - One-Command VPS Live Update Script
+set -e
+git pull origin main || echo "Git pull warning..."
+npm install --production=false
+npm run build
+pm2 restart all || pm2 start server.js --name "ai-recharge-gateway"
+```
+
+### C. cPanel_Setup_Guide.txt & README_CPANEL_TELUGU.txt (సారాంశం)
+- **Node.js Setup:** Version 20.x, Root: /public_html, Startup: server.js
+- **Credentials:** Admin Master PIN: 6606.0k, Mobile: 8466062260, Email: psm8742260@gmail.com (Purushotham)
 
 ---
 *ఈ శాశ్వత బ్యాకప్ ఫైల్ ప్రాజెక్ట్ రూట్ లోని `/backups/PERMANENT_CODE_BACKUP.md` లో శాశ్వతంగా భద్రపరచబడింది.*

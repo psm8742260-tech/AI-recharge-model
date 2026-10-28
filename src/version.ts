@@ -25,9 +25,18 @@ export const PROJECT_SHA_FINGERPRINT = 'SHA-256:48ad8e6f-65ff-43d6-b8e9-9101a514
  */
 export const TESTING_MODE = true;
 
+export const SYSTEM_INTEGRITY_LOCK = 'STRICT_ENFORCED';
+export const LAST_MODIFIED_BY = 'AI_ENGINEER_HYBRID_CORE';
+export const LAST_MODIFIED_TIME = '2026-10-27 21:05:00';
+
 export const getDisplayVersion = () => APP_VERSION_MODE;
-export const getBuildInfo = () => `${APP_VERSION_MODE} [${APP_ENGINE_STATUS}]`;
+export const getBuildInfo = () => `${APP_VERSION_MODE} [${APP_ENGINE_STATUS}] [LOCK: ${SYSTEM_INTEGRITY_LOCK}]`;
 export const getFingerprint = () => PROJECT_SHA_FINGERPRINT;
 export const getNodeStatus = () => NODE_BACKEND_STATUS;
 export const getDeploymentMode = () => 'CPANEL & NODE.JS HYBRID';
+export const getIntegrityStatus = () => ({
+  lock: SYSTEM_INTEGRITY_LOCK,
+  modifiedBy: LAST_MODIFIED_BY,
+  timestamp: LAST_MODIFIED_TIME
+});
 

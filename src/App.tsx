@@ -14,16 +14,17 @@ import { KeysManager } from './components/KeysManager';
 import { DataPacks } from './components/DataPacks';
 import { SubscriptionPlans } from './components/SubscriptionPlans';
 import { ExportModal } from './components/ExportModal';
-import { Bot, Key, Sparkles, ShieldCheck, Heart, ArrowLeft, Receipt, LogOut, Settings, BarChart2 } from 'lucide-react';
+import { ProfileModal } from './components/ProfileModal';
+import { Bot, Key, Sparkles, ShieldCheck, Heart, ArrowLeft, Receipt, LogOut, Settings, BarChart2, User as UserIcon } from 'lucide-react';
 
 import { getDisplayVersion } from './version';
 
 const DEFAULT_MASTER_ADMIN: UserAccount = {
   id: 'usr_admin_master',
   email: 'psm8742260@gmail.com',
-  name: 'Priya Sharma (Admin)',
+  name: 'Purushotham',
   mobile: '8466062260',
-  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+  avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150',
   activePlanId: 'plan-master',
   activePlanName: 'Master Admin Unlimited Access',
   planDurationMonths: 12,
@@ -93,6 +94,7 @@ export default function App() {
   const [isRechargeOpen, setIsRechargeOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [playgroundModelId, setPlaygroundModelId] = useState<string>('deepseek-v3');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -281,6 +283,13 @@ export default function App() {
                     </span>
                   </div>
                 </div>
+                <button 
+                  onClick={() => { setIsProfileOpen(true); setIsSidebarOpen(false); }}
+                  className="p-1.5 bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors border border-slate-700"
+                  title="ప్రొఫైల్ మార్చుకోండి"
+                >
+                  <Settings className="w-4 h-4" />
+                </button>
               </div>
             </div>
 
@@ -343,6 +352,22 @@ export default function App() {
                 <div className="flex flex-col text-left">
                   <span>Billing (బిల్లింగ్ & రసీదులు)</span>
                   <span className="text-[10px] text-slate-500 font-normal">మ్యాజిక్ రసీదులు • ఇన్‌వాయిస్‌లు</span>
+                </div>
+              </button>
+
+              {/* 5. Profile Edit */}
+              <button 
+                onClick={() => { setIsProfileOpen(true); setIsSidebarOpen(false); }}
+                className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+                  isProfileOpen 
+                    ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30 shadow-md' 
+                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                }`}
+              >
+                <UserIcon className="w-5 h-5 text-rose-400" /> 
+                <div className="flex flex-col text-left">
+                  <span>Profile (ప్రొఫైల్ సెట్టింగ్స్)</span>
+                  <span className="text-[10px] text-slate-500 font-normal">పేరు • ఫోటో మార్చుకోండి</span>
                 </div>
               </button>
             </nav>
@@ -500,6 +525,16 @@ export default function App() {
       <ExportModal
         isOpen={isExportOpen}
         onClose={() => setIsExportOpen(false)}
+      />
+
+      <ProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        user={user}
+        onUpdate={(updatedUser) => {
+          setUser(updatedUser);
+          localStorage.setItem('airecharge_user_account', JSON.stringify(updatedUser));
+        }}
       />
 
     </div>

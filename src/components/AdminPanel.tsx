@@ -237,9 +237,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
       const adminUser: UserAccount = {
         id: 'usr_admin_master',
         email: 'psm8742260@gmail.com',
-        name: 'Priya Sharma (Admin)',
+        name: 'Purushotham',
         mobile: '8466062260',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+        avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150',
         activePlanId: 'plan-1m',
         activePlanName: 'Master Admin Access',
         planDurationMonths: 12,

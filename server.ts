@@ -195,9 +195,9 @@ const DB_FILE = path.resolve(process.cwd(), 'server_store.json');
 const defaultUser: UserAccount = {
   id: 'usr_demo_8829',
   email: 'psm8742260@gmail.com',
-  name: 'Priya Sharma',
+  name: 'Purushotham',
   mobile: '8466062260',
-  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+  avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150',
   activePlanId: 'plan-1m',
   activePlanName: '1 Month Starter Pack',
   planDurationMonths: 1,
@@ -669,6 +669,28 @@ app.get('/api/user/me', (req: Request, res: Response) => {
   });
 });
 
+// PUT /api/user/profile - Update name or avatar
+app.put('/api/user/profile', (req: Request, res: Response) => {
+  const { name, avatar } = req.body;
+  const authEmail = ((req.headers['x-user-email'] as string) || '').trim().toLowerCase();
+  const authMobile = ((req.headers['x-user-mobile'] as string) || '').replace(/\D/g, '');
+
+  let user = store.users.find(u => 
+    (authEmail && u.email && u.email.toLowerCase() === authEmail) ||
+    (authMobile && u.mobile && u.mobile.replace(/\D/g, '') === authMobile)
+  );
+
+  if (!user) {
+    return res.status(404).json({ success: false, message: 'User not found' });
+  }
+
+  if (name) user.name = name;
+  if (avatar) user.avatar = avatar;
+
+  saveStore();
+  res.json({ success: true, user });
+});
+
 // POST /api/auth/login
 app.post('/api/auth/login', (req: Request, res: Response) => {
   const { email, name, provider, password, mobile, isAdminRequest } = req.body;
@@ -697,12 +719,16 @@ app.post('/api/auth/login', (req: Request, res: Response) => {
 
   if (!user) {
     const apiKey = isFinalAdmin ? 'phrs-7f9a2d8e41bc90a57f9a2d8e41bc90a5' : generateApiKey();
+    const defaultAvatar = isFinalAdmin 
+      ? 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150' 
+      : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150';
+    
     user = {
       id: isFinalAdmin ? 'usr_admin_master' : `usr_${Date.now()}`,
       email: cleanEmail || (cleanMobile ? `${cleanMobile}@airecharge.user` : 'user@airecharge.com'),
-      name: isFinalAdmin ? 'Priya Sharma (Admin)' : (name || (cleanEmail ? cleanEmail.split('@')[0] : `User ${cleanMobile.slice(-4)}`)),
+      name: isFinalAdmin ? 'Purushotham' : (name || (cleanEmail ? cleanEmail.split('@')[0] : `User ${cleanMobile.slice(-4)}`)),
       mobile: cleanMobile || (isFinalAdmin ? '8466062260' : ''),
-      avatar: isFinalAdmin ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150' : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+      avatar: defaultAvatar,
       activePlanId: isFinalAdmin ? 'plan-master' : 'plan-1m',
       activePlanName: isFinalAdmin ? 'Master Admin Unlimited Access' : '1 Month Starter Pack',
       planDurationMonths: isFinalAdmin ? 12 : 1,
@@ -733,6 +759,10 @@ app.post('/api/auth/login', (req: Request, res: Response) => {
     // Update existing user with latest credentials and admin status
     if (isFinalAdmin) {
       user.isAdmin = true;
+      // Ensure admin name is Purushotham if they haven't set something else
+      if (!user.name || user.name.includes('User ') || user.name.includes('@')) {
+        user.name = 'Purushotham';
+      }
       if (!user.mobile && cleanMobile) user.mobile = cleanMobile;
       if (!user.email && cleanEmail) user.email = cleanEmail;
       user.dataPackMBRemaining = Math.max(user.dataPackMBRemaining, 1024000);
@@ -740,6 +770,10 @@ app.post('/api/auth/login', (req: Request, res: Response) => {
     } else {
       if (cleanMobile && !user.mobile) user.mobile = cleanMobile;
       if (cleanEmail && (!user.email || user.email.includes('@airecharge.user'))) user.email = cleanEmail;
+      // Preserve existing name and avatar
+      if (name && (!user.name || user.name.includes('User ') || user.name.includes('@'))) {
+        user.name = name;
+      }
     }
     saveStore();
   }

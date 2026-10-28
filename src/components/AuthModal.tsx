@@ -69,7 +69,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
         signal: controller.signal,
         body: JSON.stringify({
           email: inputEmail || (inputMobile ? `${inputMobile}@airecharge.user` : 'psm8742260@gmail.com'),
-          name: isAdmin ? 'Priya Sharma (Admin)' : (inputEmail ? inputEmail.split('@')[0] : (inputMobile ? `User ${inputMobile.slice(-4)}` : 'AI Developer')),
+          name: isAdmin ? 'Purushotham' : (inputEmail ? inputEmail.split('@')[0] : (inputMobile ? `User ${inputMobile.slice(-4)}` : 'AI Developer')),
           mobile: inputMobile,
           provider: 'hybrid_auth',
           isAdminRequest: isAdmin
@@ -101,9 +101,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
     const fallbackUser: UserAccount = {
       id: isAdmin ? 'usr_admin_master' : `usr_${Date.now()}`,
       email: inputEmail || (inputMobile ? `${inputMobile}@airecharge.user` : (isAdmin ? 'psm8742260@gmail.com' : 'user@airecharge.com')),
-      name: isAdmin ? 'Priya Sharma (Admin)' : (inputEmail ? (inputEmail.split('@')[0] || 'AI Developer') : (inputMobile ? `User ${inputMobile.slice(-4)}` : 'AI Developer')),
+      name: isAdmin ? 'Purushotham' : (inputEmail ? (inputEmail.split('@')[0] || 'AI Developer') : (inputMobile ? `User ${inputMobile.slice(-4)}` : 'AI Developer')),
       mobile: inputMobile || (isAdmin ? '8466062260' : ''),
-      avatar: isAdmin ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150' : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+      avatar: isAdmin ? 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150' : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
       activePlanId: isAdmin ? 'plan-master' : 'plan-1m',
       activePlanName: isAdmin ? 'Master Admin Unlimited Access' : '1 Month Starter Pack',
       planDurationMonths: isAdmin ? 12 : 1,
