@@ -14,7 +14,7 @@ import { KeysManager } from './components/KeysManager';
 import { DataPacks } from './components/DataPacks';
 import { SubscriptionPlans } from './components/SubscriptionPlans';
 import { ExportModal } from './components/ExportModal';
-import { Bot, Key, Sparkles, ShieldCheck, Heart, ArrowLeft } from 'lucide-react';
+import { Bot, Key, Sparkles, ShieldCheck, Heart, ArrowLeft, Receipt, LogOut, Settings, BarChart2 } from 'lucide-react';
 
 import { getDisplayVersion } from './version';
 
@@ -87,6 +87,7 @@ export default function App() {
   const [receipts, setReceipts] = useState<MagicReceipt[]>([]);
   const [transactions, setTransactions] = useState<RechargeTransaction[]>([]);
   const [activeTab, setActiveTab] = useState<'models' | 'playground' | 'analytics' | 'pricing' | 'keys' | 'admin' | 'datapacks' | 'plans'>('models');
+  const [dashboardSection, setDashboardSection] = useState<'usage' | 'billing'>('usage');
   
   const [selectedModelDetail, setSelectedModelDetail] = useState<AIModel | null>(null);
   const [isRechargeOpen, setIsRechargeOpen] = useState(false);
@@ -243,7 +244,7 @@ export default function App() {
             onClick={() => setIsSidebarOpen(false)}
           />
           <div className="relative w-72 h-full bg-slate-900 border-r border-slate-800 flex flex-col shadow-2xl animate-in slide-in-from-left duration-300">
-            <div className="p-6 border-b border-slate-800 flex items-center justify-between">
+            <div className="p-5 border-b border-slate-800 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="text-lg font-black text-white flex flex-col leading-tight">
                   AI Recharge <span className="text-cyan-400">Models</span>
@@ -252,61 +253,125 @@ export default function App() {
               </div>
               <button 
                 onClick={() => setIsSidebarOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-white"
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
             </div>
 
-            <nav className="flex-1 overflow-y-auto p-4 space-y-2">
-              <button 
-                onClick={() => { setActiveTab('analytics'); setIsSidebarOpen(false); }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === 'analytics' ? 'bg-slate-800 text-cyan-400' : 'text-slate-400 hover:bg-slate-850 hover:text-slate-200'}`}
-              >
-                <Bot className="w-5 h-5" /> Usage
-              </button>
-              <button 
-                onClick={() => { setActiveTab('keys'); setIsSidebarOpen(false); }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === 'keys' ? 'bg-slate-800 text-cyan-400' : 'text-slate-400 hover:bg-slate-850 hover:text-slate-200'}`}
-              >
-                <Key className="w-5 h-5" /> API keys
-              </button>
-              <button 
-                onClick={() => { setIsRechargeOpen(true); setIsSidebarOpen(false); }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:bg-slate-850 hover:text-slate-200 transition-all"
-              >
-                <Sparkles className="w-5 h-5" /> Top up
-              </button>
-              <button 
-                onClick={() => { setActiveTab('analytics'); setIsSidebarOpen(false); }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:bg-slate-850 hover:text-slate-200 transition-all"
-              >
-                <ShieldCheck className="w-5 h-5" /> Billing
-              </button>
-              
-              <div className="pt-8 space-y-2">
-                <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:bg-slate-850 hover:text-slate-200 transition-all">
-                  Docs
-                </button>
-                <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:bg-slate-850 hover:text-slate-200 transition-all">
-                  Help & Feedback
-                </button>
-                <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:bg-slate-850 hover:text-slate-200 transition-all">
-                  Pricing
-                </button>
-                <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:bg-slate-850 hover:text-slate-200 transition-all">
-                  Chat for free
-                </button>
-              </div>
-            </nav>
-
-            <div className="p-4 border-t border-slate-800">
-              <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-slate-850/50">
-                <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full border border-slate-700" />
+            {/* USER PROFILE CARD AT TOP (AS REQUESTED BY ADMIN GARU) */}
+            <div className="p-4 border-b border-slate-800 bg-slate-950/40">
+              <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-slate-850/80 border border-slate-800 shadow-sm">
+                <img 
+                  src={user.avatar} 
+                  alt={user.name} 
+                  className="w-11 h-11 rounded-full border-2 border-cyan-500/40 object-cover shadow-sm shrink-0" 
+                />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-white truncate">{user.name}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-bold text-white truncate">{user.name}</p>
+                    {user.isAdmin && (
+                      <span className="text-[9px] px-1.5 py-0.2 bg-emerald-500 text-slate-950 font-black rounded-full shrink-0">ADMIN</span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-cyan-400 font-mono truncate">{user.email || user.mobile}</p>
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <span className="text-[9px] px-1.5 py-0.5 bg-slate-800 text-cyan-300 font-bold rounded truncate">
+                      {user.activePlanName || 'Prepaid Pack'}
+                    </span>
+                  </div>
                 </div>
               </div>
+            </div>
+
+            {/* THE 4 CORE TAILORED NAVIGATION FEATURES */}
+            <nav className="flex-1 overflow-y-auto p-4 space-y-2.5">
+              {/* 1. Usage */}
+              <button 
+                onClick={() => { setDashboardSection('usage'); setActiveTab('analytics'); setIsSidebarOpen(false); }}
+                className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+                  activeTab === 'analytics' && dashboardSection === 'usage' 
+                    ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 shadow-md' 
+                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                }`}
+              >
+                <Bot className="w-5 h-5 text-cyan-400" /> 
+                <div className="flex flex-col text-left">
+                  <span>Usage (వినియోగం & ఎంబీ)</span>
+                  <span className="text-[10px] text-slate-500 font-normal">ఎంత వాడారు • బ్యాలెన్స్ ఎంబీ</span>
+                </div>
+              </button>
+
+              {/* 2. API Keys */}
+              <button 
+                onClick={() => { setActiveTab('keys'); setIsSidebarOpen(false); }}
+                className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+                  activeTab === 'keys' 
+                    ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 shadow-md' 
+                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                }`}
+              >
+                <Key className="w-5 h-5 text-cyan-400" /> 
+                <div className="flex flex-col text-left">
+                  <span>API keys (కీలు & లాక్)</span>
+                  <span className="text-[10px] text-slate-500 font-normal">పర్సనల్ కీ • లాక్ స్టేటస్</span>
+                </div>
+              </button>
+
+              {/* 3. Top up */}
+              <button 
+                onClick={() => { setIsRechargeOpen(true); setIsSidebarOpen(false); }}
+                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition-all cursor-pointer"
+              >
+                <Sparkles className="w-5 h-5 text-emerald-400" /> 
+                <div className="flex flex-col text-left">
+                  <span>Top up (రీచార్జ్ ప్యాక్స్)</span>
+                  <span className="text-[10px] text-slate-500 font-normal">డేటా ప్యాక్స్ • తక్షణ టాప్-అప్</span>
+                </div>
+              </button>
+
+              {/* 4. Billing */}
+              <button 
+                onClick={() => { setDashboardSection('billing'); setActiveTab('analytics'); setIsSidebarOpen(false); }}
+                className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+                  activeTab === 'analytics' && dashboardSection === 'billing' 
+                    ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 shadow-md' 
+                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                }`}
+              >
+                <Receipt className="w-5 h-5 text-cyan-400" /> 
+                <div className="flex flex-col text-left">
+                  <span>Billing (బిల్లింగ్ & రసీదులు)</span>
+                  <span className="text-[10px] text-slate-500 font-normal">మ్యాజిక్ రసీదులు • ఇన్‌వాయిస్‌లు</span>
+                </div>
+              </button>
+            </nav>
+
+            {/* BOTTOM SECTION: SETTINGS & SERVER CONNECTION */}
+            <div className="p-4 border-t border-slate-800 space-y-2 bg-slate-950/30">
+              <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-[11px] text-slate-400">
+                <div className="flex items-center justify-between text-cyan-400 font-bold mb-1">
+                  <span>Gateway Status</span>
+                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400">ONLINE</span>
+                </div>
+                <div className="font-mono text-[10px] text-slate-300 truncate">
+                  arm.phrscrowd.online
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  setUser(null);
+                  setIsSidebarOpen(false);
+                  localStorage.removeItem('airecharge_last_email');
+                  localStorage.removeItem('airecharge_last_mobile');
+                  localStorage.removeItem('airecharge_user_account');
+                }}
+                className="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 border border-slate-800 hover:border-rose-500/30 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>లాగౌట్ (Logout)</span>
+              </button>
             </div>
           </div>
         </div>
@@ -353,6 +418,7 @@ export default function App() {
             onOpenRecharge={() => setIsRechargeOpen(true)}
             onRegenerateKey={handleRegenerateKey}
             onBack={() => setActiveTab('models')}
+            initialSection={dashboardSection}
           />
         )}
 

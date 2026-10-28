@@ -57,6 +57,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
   const [bundleSize, setBundleSize] = useState('37.2 MB');
   const [copiedSecretKey, setCopiedSecretKey] = useState<string | null>(null);
 
+  // In-app Notification Toast State
+  const [toastNotification, setToastNotification] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastNotification(msg);
+    setTimeout(() => setToastNotification(null), 4000);
+  };
+
   const handleCopyText = (text: string, keyId: string) => {
     navigator.clipboard.writeText(text).catch(() => {});
     setCopiedSecretKey(keyId);
@@ -260,24 +268,63 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
     setIsVerifyingPin(false);
   };
 
+  /* TRAILER_MODE_TOGGLE - Controls whether amounts and QR code payments are visible to users or in free trailer test mode */
+  const handleTogglePaymentMode = async () => {
+    if (!config) return;
+    const newConfig = { ...config, isPaymentEnabled: !config.isPaymentEnabled };
+    setConfig(newConfig);
+    setIsSaving(true);
+    try {
+      localStorage.setItem('airecharge_config', JSON.stringify(newConfig));
+      window.dispatchEvent(new CustomEvent('airecharge_config_updated', { detail: newConfig }));
+      await fetch('/api/admin/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config: newConfig }),
+      });
+      if (newConfig.isPaymentEnabled) {
+        showToast('🟢 అమౌంట్స్ ఆన్ చేయబడ్డాయి (యూజర్లకి ధరలు మరియు QR పేమెంట్ కనిపిస్తాయి - Commercial Mode)');
+      } else {
+        showToast('⚪ అమౌంట్స్ ఆఫ్ చేయబడ్డాయి (ట్రైలర్ టెస్టింగ్ మోడ్ - ధరలు దాచబడ్డాయి)');
+      }
+    } catch (err) {
+      console.error('Failed to toggle payment mode:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleQrImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      alert('దయచేసి సరైన ఫోటో లేదా ఇమేజ్ ఫైల్ మాత్రమే ఎంచుకోండి (Please select a valid image file).');
+      showToast('దయచేసి సరైన ఫోటో లేదా ఇమేజ్ ఫైల్ మాత్రమే ఎంచుకోండి.');
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      alert('ఇమేజ్ సైజు 10MB కంటే తక్కువగా ఉండాలి (Image size must be under 10MB).');
+      showToast('ఇమేజ్ సైజు 10MB కంటే తక్కువగా ఉండాలి.');
       return;
     }
 
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       if (typeof reader.result === 'string' && config) {
-        setConfig({ ...config, qrCodeUrl: reader.result });
+        const updatedConfig = { ...config, qrCodeUrl: reader.result };
+        setConfig(updatedConfig);
+        localStorage.setItem('airecharge_config', JSON.stringify(updatedConfig));
+        window.dispatchEvent(new CustomEvent('airecharge_config_updated', { detail: updatedConfig }));
+        try {
+          await fetch('/api/admin/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ config: updatedConfig }),
+          });
+          showToast('కొత్త QR కోడ్ విజయవంతంగా అప్‌లోడ్ చేయబడింది! యూజర్లకు ఇదే కనిపిస్తుంది.');
+        } catch (err) {
+          console.error('Failed to save QR code:', err);
+        }
       }
     };
     reader.readAsDataURL(file);
@@ -287,14 +334,35 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
     if (!config) return;
     setIsSaving(true);
     try {
+      localStorage.setItem('airecharge_config', JSON.stringify(config));
+      window.dispatchEvent(new CustomEvent('airecharge_config_updated', { detail: config }));
       await fetch('/api/admin/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ config }),
       });
-      alert('System settings updated successfully!');
+      showToast('వ్యవస్థ మరియు QR గేట్‌వే సెట్టింగ్‌లు సేవ్ చేయబడ్డాయి! (Settings Saved!)');
     } catch (err) {
       console.error('Failed to save config:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveTopups = async (updatedList?: TopUpPack[]) => {
+    const listToSave = updatedList || topups;
+    setIsSaving(true);
+    try {
+      localStorage.setItem('airecharge_topups', JSON.stringify(listToSave));
+      window.dispatchEvent(new CustomEvent('airecharge_plans_updated', { detail: { plans, topups: listToSave } }));
+      await fetch('/api/admin/plans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topups: listToSave }),
+      });
+      showToast('డేటా ప్యాక్ వివరాలు సేవ్ చేయబడ్డాయి! యూజర్లకు లైవ్ అప్‌డేట్ అయ్యాయి.');
+    } catch (err) {
+      console.error('Failed to save topups:', err);
     } finally {
       setIsSaving(false);
     }
@@ -307,7 +375,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
     const updatedPlans = plans.map(p => p.id === plan.id ? plan : p);
     try {
       localStorage.setItem('airecharge_plans', JSON.stringify(updatedPlans));
-      window.dispatchEvent(new CustomEvent('airecharge_plans_updated', { detail: updatedPlans }));
+      window.dispatchEvent(new CustomEvent('airecharge_plans_updated', { detail: { plans: updatedPlans, topups } }));
     } catch (e) {
       console.error('Failed to sync plans locally:', e);
     }
@@ -327,6 +395,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
 
       // Mark as saved -> turns button to RED
       setSavedPlanIds(prev => ({ ...prev, [plan.id]: true }));
+      showToast(`${plan.name} విజయవంతంగా సేవ్ చేయబడింది!`);
     } catch (err) {
       console.error('Failed to save plan to backend:', err);
       // Still set saved because local storage is updated
@@ -345,7 +414,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ adminEmail, adminMobile, adminPassword, masterPin }),
       });
-      alert('Security settings updated successfully!');
+      showToast('సెక్యూరిటీ సెట్టింగ్‌లు విజయవంతంగా అప్‌డేట్ అయ్యాయి!');
     } catch (err) {
       console.error('Failed to save security:', err);
     } finally {
@@ -463,45 +532,25 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
 
   return (
     <div className="space-y-8 pb-16">
+      {/* Toast Notification */}
+      {toastNotification && (
+        <div className="fixed top-5 right-5 z-50 p-4 rounded-2xl bg-slate-900 border-2 border-cyan-500 text-white shadow-2xl flex items-center gap-3 animate-in slide-in-from-top-3 duration-300 max-w-md">
+          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+          <span className="text-xs font-bold leading-relaxed">{toastNotification}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-800 pb-6">
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-2">
             <button
               onClick={onBack}
-              className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/50 transition-all shadow-lg"
+              className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/50 transition-all shadow-lg cursor-pointer"
               title="మళ్ళీ వెనక్కి వెళ్ళండి"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
-            
-            {/* Admin Access Toggle */}
-            {config && (
-              <button
-                onClick={async () => {
-                  const newConfig = { ...config, isPaymentEnabled: !config.isPaymentEnabled };
-                  setConfig(newConfig);
-                  setIsSaving(true);
-                  try {
-                    await fetch('/api/admin/config', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ config: newConfig }),
-                    });
-                  } finally {
-                    setIsSaving(false);
-                  }
-                }}
-                className={`p-2 rounded-lg border transition-all shadow-lg flex items-center justify-center ${
-                  !config.isPaymentEnabled 
-                    ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400' 
-                    : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-400'
-                }`}
-                title={config.isPaymentEnabled ? "అడ్మిన్ యాక్సెస్ ఆన్ చేయండి" : "అడ్మిన్ యాక్సెస్ ఆఫ్ చేయండి"}
-              >
-                <ShieldCheck className={`w-4 h-4 ${!config.isPaymentEnabled ? 'animate-pulse' : ''}`} />
-              </button>
-            )}
           </div>
           <div>
             <div className="text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-1 flex items-center gap-1.5">
@@ -512,12 +561,44 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
               Gateway Management
             </h2>
             <p className="text-xs text-slate-400 mt-1">
-              Configure token economics, recharge plans, and system-level parameters.
+              Configure token economics, recharge plans, QR code gateway, and Amounts (ON/OFF).
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Master Amounts & Payment Toggle Switch (Trailer Mode) */}
+          {config && (
+            <div className="flex items-center gap-3 p-2 px-3.5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl">
+              <div className="flex flex-col text-right">
+                <span className="text-[10px] uppercase font-black tracking-wider text-slate-400">
+                  అమౌంట్స్ & పేమెంట్ మోడ్ (Amounts ON/OFF)
+                </span>
+                <span className={`text-xs font-bold flex items-center justify-end gap-1.5 ${config.isPaymentEnabled ? 'text-emerald-400' : 'text-amber-400'}`}>
+                  <span className={`w-2 h-2 rounded-full ${config.isPaymentEnabled ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+                  {config.isPaymentEnabled ? 'ఆన్ (ON): ధరలు కనిపిస్తాయి' : 'ఆఫ్ (OFF): ట్రైలర్ మోడ్ (Free)'}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleTogglePaymentMode}
+                disabled={isSaving}
+                aria-label="Toggle Amounts Mode"
+                className={`relative inline-flex h-7 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  config.isPaymentEnabled ? 'bg-emerald-500' : 'bg-slate-700'
+                }`}
+                title={config.isPaymentEnabled ? "అమౌంట్స్ ఆఫ్ చేయండి (ట్రైలర్ టెస్టింగ్ మోడ్)" : "అమౌంట్స్ ఆన్ చేయండి (ధరలు & QR కనిపిస్తాయి)"}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                    config.isPaymentEnabled ? 'translate-x-7' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+          )}
+
           <div className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-[10px] font-bold text-slate-400 flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             {getDisplayVersion()}
@@ -665,6 +746,46 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:border-cyan-500 outline-none font-mono"
                   />
                 </div>
+              </div>
+
+              {/* TRAILER_MODE_CARD - Dedicated Trailer vs Commercial Mode Switch */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-slate-950 border-2 border-slate-800 hover:border-cyan-500/40 transition-all shadow-xl">
+                <div className="space-y-1 max-w-lg">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      అమౌంట్స్ & పేమెంట్ మోడ్ (Amounts ON/OFF - Trailer Switch)
+                    </span>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase font-mono ${
+                      config.isPaymentEnabled 
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                        : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                    }`}>
+                      {config.isPaymentEnabled ? '🟢 ON: Commercial' : '⚪ OFF: Trailer Mode'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    <strong>ఆన్ (ON) చేసినప్పుడు:</strong> యూజర్లందరికీ ప్లాన్‌లు మరియు డేటా ప్యాక్‌లలో ధరలు (₹), UPI QR కోడ్ మరియు పేమెంట్ గేట్‌వే స్పష్టంగా కనిపిస్తాయి.<br/>
+                    <strong>ఆఫ్ (OFF) చేసినప్పుడు:</strong> ట్రైలర్ టెస్టింగ్ సమయం కోసం అమౌంట్స్ అన్నీ యూజర్లకు కనిపించవు; 1-క్లిక్‌తో ఉచితంగా ప్యాక్‌లను యాక్టివేట్ చేసుకోవచ్చు.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleTogglePaymentMode}
+                  disabled={isSaving}
+                  aria-label="Toggle Amounts Mode"
+                  className={`relative inline-flex h-8 w-16 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    config.isPaymentEnabled ? 'bg-emerald-500' : 'bg-slate-700'
+                  }`}
+                  title={config.isPaymentEnabled ? "అమౌంట్స్ ఆఫ్ చేయండి" : "అమౌంట్స్ ఆన్ చేయండి"}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                      config.isPaymentEnabled ? 'translate-x-8' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
               </div>
 
               <div className="flex items-center justify-between p-4 rounded-xl bg-slate-950 border border-slate-800">
@@ -908,9 +1029,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
                     if (config) {
-                      setConfig({ ...config, qrCodeUrl: '' });
+                      const updated = { ...config, qrCodeUrl: '' };
+                      setConfig(updated);
+                      localStorage.setItem('airecharge_config', JSON.stringify(updated));
+                      window.dispatchEvent(new CustomEvent('airecharge_config_updated', { detail: updated }));
+                      try {
+                        await fetch('/api/admin/config', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ config: updated }),
+                        });
+                        showToast('QR కోడ్ విజయవంతంగా తొలగించబడింది! (QR Deleted!)');
+                      } catch (err) {
+                        console.error('Failed to delete QR:', err);
+                      }
                     }
                   }}
                   className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[10px] font-black hover:border-rose-400 transition-all flex items-center gap-1.5 cursor-pointer shadow-md"
@@ -976,23 +1110,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
                       </div>
                     </div>
                     <button
-                      onClick={async () => {
-                        setIsSaving(true);
-                        try {
-                          await fetch('/api/admin/plans', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ topups }),
-                          });
-                          alert('డేటా ప్యాక్ విజయవంతంగా సేవ్ చేయబడింది! (Data Pack Saved!)');
-                        } finally {
-                          setIsSaving(false);
-                        }
-                      }}
-                      className="w-full mt-6 py-2.5 rounded-xl bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 text-slate-300 text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2 border border-slate-700/50 cursor-pointer"
+                      onClick={() => handleSaveTopups()}
+                      disabled={isSaving}
+                      className="w-full mt-6 py-2.5 rounded-xl bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 text-slate-300 text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2 border border-slate-700/50 cursor-pointer disabled:opacity-50"
                     >
                       <Save className="w-3.5 h-3.5" />
-                      Feed & Save
+                      {isSaving ? 'సేవ్ అవుతోంది...' : 'Feed & Save'}
                     </button>
                   </div>
                 ))}

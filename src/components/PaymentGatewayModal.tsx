@@ -45,7 +45,16 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
     } catch (e) {}
     return SUBSCRIPTION_PLANS;
   });
-  const [topups, setTopups] = useState<TopUpPack[]>(TOP_UP_PACKS);
+  const [topups, setTopups] = useState<TopUpPack[]>(() => {
+    try {
+      const cached = localStorage.getItem('airecharge_topups');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return TOP_UP_PACKS;
+  });
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan>(() => {
     try {
       const cached = localStorage.getItem('airecharge_plans');
@@ -63,6 +72,16 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
   const [generatedApiKey, setGeneratedApiKey] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [isPaymentEnabled, setIsPaymentEnabled] = useState<boolean>(() => {
+    try {
+      const cached = localStorage.getItem('airecharge_config');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (typeof parsed.isPaymentEnabled === 'boolean') return parsed.isPaymentEnabled;
+      }
+    } catch (e) {}
+    return false;
+  });
 
   // Every time modal opens, ALWAYS reset to Board 1
   useEffect(() => {
@@ -76,23 +95,62 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
 
   useEffect(() => {
     const handlePlansUpdated = (event: any) => {
-      if (event.detail && Array.isArray(event.detail)) {
-        setPlans(event.detail);
-        setSelectedPlan((prev) => event.detail.find((p: any) => p.id === prev.id) || event.detail[0]);
+      if (event.detail) {
+        if (Array.isArray(event.detail)) {
+          setPlans(event.detail);
+          setSelectedPlan((prev) => event.detail.find((p: any) => p.id === prev.id) || event.detail[0]);
+        } else {
+          if (Array.isArray(event.detail.plans)) {
+            setPlans(event.detail.plans);
+            setSelectedPlan((prev) => event.detail.plans.find((p: any) => p.id === prev.id) || event.detail.plans[0]);
+          }
+          if (Array.isArray(event.detail.topups)) {
+            setTopups(event.detail.topups);
+            setSelectedTopUp((prev) => event.detail.topups.find((t: any) => t.id === prev.id) || event.detail.topups[0]);
+          }
+        }
       }
     };
+
+    const handleConfigUpdated = (event: any) => {
+      if (event.detail) {
+        if (typeof event.detail.isPaymentEnabled === 'boolean') {
+          setIsPaymentEnabled(event.detail.isPaymentEnabled);
+        }
+        if (event.detail.qrCodeUrl !== undefined) {
+          setQrCodeUrl(event.detail.qrCodeUrl);
+        }
+        if (event.detail.upiId) {
+          setUpiId(event.detail.upiId);
+        }
+      }
+    };
+
     window.addEventListener('airecharge_plans_updated', handlePlansUpdated);
-    return () => window.removeEventListener('airecharge_plans_updated', handlePlansUpdated);
+    window.addEventListener('airecharge_config_updated', handleConfigUpdated);
+    return () => {
+      window.removeEventListener('airecharge_plans_updated', handlePlansUpdated);
+      window.removeEventListener('airecharge_config_updated', handleConfigUpdated);
+    };
   }, []);
 
   const fetchPlans = async () => {
     try {
-      const cached = localStorage.getItem('airecharge_plans');
-      if (cached) {
-        const parsed = JSON.parse(cached);
+      const cachedPlans = localStorage.getItem('airecharge_plans');
+      if (cachedPlans) {
+        const parsed = JSON.parse(cachedPlans);
         if (Array.isArray(parsed) && parsed.length > 0) {
           setPlans(parsed);
           setSelectedPlan((prev) => parsed.find((p: any) => p.id === prev.id) || parsed[0]);
+        }
+      }
+
+      const cachedTopups = localStorage.getItem('airecharge_topups');
+      if (cachedTopups) {
+        const parsed = JSON.parse(cachedTopups);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setTopups(parsed);
+          setSelectedTopUp((prev) => parsed.find((p: any) => p.id === prev.id) || parsed[0]);
         }
       }
 
@@ -105,11 +163,15 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
       }
       if (data.topups && data.topups.length > 0) {
         setTopups(data.topups);
-        setSelectedTopUp(data.topups[0]);
+        setSelectedTopUp((prev) => data.topups.find((p: any) => p.id === prev.id) || data.topups[0]);
+        localStorage.setItem('airecharge_topups', JSON.stringify(data.topups));
       }
       if (data.config) {
         if (data.config.upiId) setUpiId(data.config.upiId);
-        if (data.config.qrCodeUrl) setQrCodeUrl(data.config.qrCodeUrl);
+        if (data.config.qrCodeUrl !== undefined) setQrCodeUrl(data.config.qrCodeUrl);
+        if (typeof data.config.isPaymentEnabled === 'boolean') {
+          setIsPaymentEnabled(data.config.isPaymentEnabled);
+        }
       }
     } catch (err) {
       console.error('Failed to fetch plans config:', err);
@@ -122,24 +184,29 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
     setIsProcessing(true);
     try {
       const isTopUp = activeTab === 'topups';
+      const effectivePrice = isPaymentEnabled ? (isTopUp ? selectedTopUp.priceINR : selectedPlan.priceINR) : 0;
+      const effectiveMethod = isPaymentEnabled 
+        ? `UPI QR (${upiId}${utrRef ? ` / UTR: ${utrRef}` : ''})`
+        : 'ట్రైలర్ ఉచిత యాక్టివేషన్ (Trailer Free Mode)';
+
       const body = isTopUp
         ? {
             planId: selectedTopUp.id,
             planName: selectedTopUp.name,
             durationMonths: 0,
-            priceINR: selectedTopUp.priceINR,
+            priceINR: effectivePrice,
             dataPackMB: selectedTopUp.dataMB,
             dailyLimitMB: user?.dailyLimitMB || 800,
-            paymentMethod: `UPI QR (${upiId}${utrRef ? ` / UTR: ${utrRef}` : ''})`,
+            paymentMethod: effectiveMethod,
           }
         : {
             planId: selectedPlan.id,
             planName: selectedPlan.name,
             durationMonths: selectedPlan.durationMonths,
-            priceINR: selectedPlan.priceINR,
+            priceINR: effectivePrice,
             dataPackGB: selectedPlan.dataPackGB,
             dailyLimitMB: selectedPlan.dailyLimitMB,
-            paymentMethod: `UPI QR (${upiId}${utrRef ? ` / UTR: ${utrRef}` : ''})`,
+            paymentMethod: effectiveMethod,
           };
 
       const res = await fetch('/api/plans/recharge', {
@@ -260,12 +327,20 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
                       </div>
 
                       <div className="py-2">
-                        <div className="text-3xl font-extrabold font-mono text-cyan-400">
-                          ₹{plan.priceINR}
-                        </div>
-                        <div className="text-[11px] text-slate-400 font-medium">
-                          ${plan.priceUSD} USD / total
-                        </div>
+                        {isPaymentEnabled ? (
+                          <>
+                            <div className="text-3xl font-extrabold font-mono text-cyan-400">
+                              ₹{plan.priceINR}
+                            </div>
+                            <div className="text-[11px] text-slate-400 font-medium">
+                              ${plan.priceUSD} USD / total
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-sm font-black font-mono text-amber-400 bg-amber-500/10 border border-amber-500/30 px-3 py-1.5 rounded-xl w-fit">
+                            ట్రైలర్ ఉచితం (Trailer Free)
+                          </div>
+                        )}
                       </div>
 
                       <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800/80 space-y-1 text-xs">
@@ -306,7 +381,7 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedPlan(plan);
-                          setActiveBoard(2); // Go directly to Board 2 (Payment Gateway QR)
+                          setActiveBoard(2); // Go directly to Board 2
                         }}
                         className={`w-full py-2.5 rounded-xl text-center text-xs font-extrabold transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer ${
                           selectedPlan.id === plan.id
@@ -314,7 +389,7 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
                             : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                         }`}
                       >
-                        Buy Now
+                        {isPaymentEnabled ? 'Buy Now' : 'ట్రైలర్ యాక్టివేట్ (Free)'}
                         <ArrowRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -337,8 +412,9 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
                     <div className="space-y-2">
                       <h3 className="text-base font-extrabold text-white">{topup.name}</h3>
                       <p className="text-xs text-slate-300 leading-relaxed">{topup.description}</p>
-                      <div className="pt-2 text-2xl font-mono font-extrabold text-emerald-400">
-                        ₹{topup.priceINR} <span className="text-xs font-normal text-slate-400">/ +{topup.dataMB} MB</span>
+                      <div className="pt-2 text-xl font-mono font-extrabold text-emerald-400">
+                        {isPaymentEnabled ? `₹${topup.priceINR}` : 'ట్రైలర్ ఉచితం (Free)'}{' '}
+                        <span className="text-xs font-normal text-slate-400">/ +{topup.dataMB} MB</span>
                       </div>
                     </div>
 
@@ -347,7 +423,7 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedTopUp(topup);
-                          setActiveBoard(2); // Go directly to Board 2 (Payment Gateway QR)
+                          setActiveBoard(2); // Go directly to Board 2
                         }}
                         className={`w-full py-2.5 rounded-xl text-center text-xs font-extrabold transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer ${
                           selectedTopUp.id === topup.id
@@ -355,7 +431,7 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
                             : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                         }`}
                       >
-                        Buy Now
+                        {isPaymentEnabled ? 'Buy Now' : 'ట్రైలర్ యాక్టివేట్ (Free)'}
                         <ArrowRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -373,22 +449,26 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
           </div>
         )}
 
-        {/* BOARD 2: PAYMENT GATEWAY & DIRECT QR CODE BOARD */}
+        {/* BOARD 2: PAYMENT GATEWAY QR OR TRAILER ACTIVATION */}
         {activeBoard === 2 && (
           <div className="space-y-6">
             <div className="border-b border-slate-800 pb-4">
               <button
                 onClick={() => setActiveBoard(1)}
-                className="text-xs text-cyan-400 hover:underline mb-2 inline-block flex items-center gap-1"
+                className="text-xs text-cyan-400 hover:underline mb-2 inline-block flex items-center gap-1 cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 Back to Subscription Plans
               </button>
               <h2 className="text-xl sm:text-2xl font-extrabold text-white">
-                Payment Gateway - Scan & Pay (PhonePe / GPay / UPI)
+                {isPaymentEnabled 
+                  ? 'Payment Gateway - Scan & Pay (PhonePe / GPay / UPI)' 
+                  : 'ట్రైలర్ టెస్టింగ్ యాక్టివేషన్ (Trailer Mode Instant Activation)'}
               </h2>
               <p className="text-xs text-slate-400">
-                Scan the QR code below or pay via UPI address to complete your recharge.
+                {isPaymentEnabled 
+                  ? 'Scan the QR code below or pay via UPI address to complete your recharge.'
+                  : 'ప్రస్తుతం ట్రైలర్ మోడ్ యాక్టివ్‌గా ఉంది. ఎటువంటి పేమెంట్ లేదా QR కోడ్ అవసరం లేకుండా నేరుగా ఉచితంగా యాక్టివేట్ చేసుకోండి.'}
               </p>
             </div>
 
@@ -405,99 +485,169 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
               </div>
 
               <div className="text-right">
-                <span className="text-2xl font-extrabold font-mono text-emerald-400">
-                  ₹{activeTab === 'plans' ? selectedPlan.priceINR : selectedTopUp.priceINR}
-                </span>
-                <span className="text-[10px] text-slate-500 block">All taxes included</span>
-              </div>
-            </div>
-
-            {/* QR CODE GATEWAY BOX */}
-            <div className="p-6 rounded-2xl bg-slate-950 border border-cyan-500/40 text-center space-y-4 shadow-xl max-w-md mx-auto">
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-3 py-1 rounded-full flex items-center gap-1.5">
-                  <QrCode className="w-3.5 h-3.5" /> Unified UPI QR Gateway
-                </span>
-              </div>
-
-              {/* QR Code Canvas Box or Dynamic Image */}
-              <div className="w-56 h-56 mx-auto bg-white p-2 rounded-2xl shadow-xl flex items-center justify-center border-2 border-cyan-400/60 overflow-hidden">
-                {qrCodeUrl ? (
-                  <img src={qrCodeUrl} alt="UPI QR" className="w-full h-full object-contain" />
+                {isPaymentEnabled ? (
+                  <>
+                    <span className="text-2xl font-extrabold font-mono text-emerald-400">
+                      ₹{activeTab === 'plans' ? selectedPlan.priceINR : selectedTopUp.priceINR}
+                    </span>
+                    <span className="text-[10px] text-slate-500 block">All taxes included</span>
+                  </>
                 ) : (
-                  <div className="w-full h-full border-4 border-slate-900 rounded-xl p-2.5 flex flex-col justify-between bg-slate-50 relative">
-                    <div className="flex justify-between">
-                      <div className="w-10 h-10 bg-slate-900 rounded-lg"></div>
-                      <div className="w-8 h-8 bg-slate-900 rounded-lg"></div>
-                    </div>
-                    <div className="text-center font-mono font-black text-slate-900 text-xs tracking-tight py-1 bg-cyan-100 rounded border border-cyan-300">
-                      SCAN & PAY ₹{activeTab === 'plans' ? selectedPlan.priceINR : selectedTopUp.priceINR}
-                    </div>
-                    <div className="flex justify-between items-end">
-                      <div className="w-8 h-8 bg-slate-900 rounded-lg"></div>
-                      <div className="w-10 h-10 bg-slate-900 rounded-lg"></div>
-                    </div>
-                  </div>
+                  <>
+                    <span className="text-base font-black font-mono text-amber-400 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-xl inline-block">
+                      ఉచితం (₹0)
+                    </span>
+                    <span className="text-[10px] text-slate-500 block mt-1">ట్రైలర్ మోడ్ యాక్టివ్</span>
+                  </>
                 )}
               </div>
+            </div>
 
-              <div className="space-y-1">
-                <div className="text-xs text-slate-400 font-medium">Scan using PhonePe, Google Pay, Paytm or BHIM</div>
-                <div className="flex items-center justify-center gap-2 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 w-fit mx-auto">
-                  <span className="text-sm font-extrabold text-cyan-300 font-mono">{upiId}</span>
-                  <button
-                    type="button"
-                    onClick={() => copyApiKey(upiId)}
-                    className="text-[10px] text-cyan-400 font-bold hover:underline"
-                  >
-                    {copiedKey ? 'Copied' : 'Copy'}
-                  </button>
+            {isPaymentEnabled ? (
+              /* Commercial Payment Gateway with QR Code */
+              <div className="space-y-4">
+                <div className="p-6 rounded-2xl bg-slate-950 border border-cyan-500/40 text-center space-y-4 shadow-xl max-w-md mx-auto">
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-3 py-1 rounded-full flex items-center gap-1.5">
+                      <QrCode className="w-3.5 h-3.5" /> Unified UPI QR Gateway
+                    </span>
+                  </div>
+
+                  {/* QR Code Canvas Box or Dynamic Image */}
+                  <div className="w-56 h-56 mx-auto bg-white p-2 rounded-2xl shadow-xl flex items-center justify-center border-2 border-cyan-400/60 overflow-hidden">
+                    {qrCodeUrl ? (
+                      <img src={qrCodeUrl} alt="UPI QR" className="w-full h-full object-contain" />
+                    ) : (
+                      <div className="w-full h-full border-4 border-slate-900 rounded-xl p-2.5 flex flex-col justify-between bg-slate-50 relative">
+                        <div className="flex justify-between">
+                          <div className="w-10 h-10 bg-slate-900 rounded-lg"></div>
+                          <div className="w-8 h-8 bg-slate-900 rounded-lg"></div>
+                        </div>
+                        <div className="text-center font-mono font-black text-slate-900 text-xs tracking-tight py-1 bg-cyan-100 rounded border border-cyan-300">
+                          SCAN & PAY ₹{activeTab === 'plans' ? selectedPlan.priceINR : selectedTopUp.priceINR}
+                        </div>
+                        <div className="flex justify-between items-end">
+                          <div className="w-8 h-8 bg-slate-900 rounded-lg"></div>
+                          <div className="w-10 h-10 bg-slate-900 rounded-lg"></div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="text-xs text-slate-400 font-medium">Scan using PhonePe, Google Pay, Paytm or BHIM</div>
+                    <div className="flex items-center justify-center gap-2 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 w-fit mx-auto">
+                      <span className="text-sm font-extrabold text-cyan-300 font-mono">{upiId}</span>
+                      <button
+                        type="button"
+                        onClick={() => copyApiKey(upiId)}
+                        className="text-[10px] text-cyan-400 font-bold hover:underline"
+                      >
+                        {copiedKey ? 'Copied' : 'Copy'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Supported Payment Apps Bar */}
+                  <div className="pt-2 border-t border-slate-800 flex items-center justify-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-wider flex-wrap">
+                    <span className="px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">PhonePe</span>
+                    <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">Google Pay</span>
+                    <span className="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Paytm</span>
+                    <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">BHIM UPI</span>
+                  </div>
                 </div>
+
+                <div className="space-y-2 max-w-md mx-auto">
+                  <label className="text-xs font-medium text-slate-300 block">
+                    UPI Reference VPA or 12-digit UTR (Optional):
+                  </label>
+                  <input
+                    type="text"
+                    value={utrRef}
+                    onChange={(e) => setUtrRef(e.target.value)}
+                    placeholder="Enter 12-digit UTR or your UPI ID"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-100 font-mono focus:outline-none focus:border-cyan-500"
+                  />
+                  <p className="text-[11px] text-slate-500">
+                    After completing the payment in your payment app, click below to verify and generate your API key instantly.
+                  </p>
+                </div>
+
+                {/* Complete Payment Button */}
+                <button
+                  onClick={handleProcessPayment}
+                  disabled={isProcessing}
+                  className="w-full max-w-md mx-auto py-4 rounded-xl bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 text-slate-950 font-extrabold text-sm hover:brightness-110 transition-all shadow-xl shadow-cyan-500/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 block"
+                >
+                  {isProcessing ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                      Verifying Payment & Minting API Key...
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck className="w-5 h-5" />
+                      I Have Paid - Verify & Activate API Key
+                    </>
+                  )}
+                </button>
               </div>
+            ) : (
+              /* TRAILER FREE MODE ACTIVATION BOX */
+              <div className="p-8 rounded-3xl bg-slate-950 border-2 border-amber-500/40 text-center space-y-6 shadow-2xl max-w-md mx-auto animate-in zoom-in-95 duration-300">
+                <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400 shadow-xl shadow-amber-500/20">
+                  <Sparkles className="w-8 h-8 animate-pulse" />
+                </div>
 
-              {/* Supported Payment Apps Bar */}
-              <div className="pt-2 border-t border-slate-800 flex items-center justify-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-wider flex-wrap">
-                <span className="px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">PhonePe</span>
-                <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">Google Pay</span>
-                <span className="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Paytm</span>
-                <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">BHIM UPI</span>
+                <div className="space-y-2">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full">
+                    ట్రైలర్ టెస్టింగ్ మోడ్ (Trailer Mode)
+                  </span>
+                  <h3 className="text-xl font-black text-white">
+                    ఉచిత తక్షణ యాక్టివేషన్
+                  </h3>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    అడ్మిన్ చేత అమౌంట్స్ ఆఫ్ చేయబడ్డాయి. ఎటువంటి చెల్లింపు లేదా QR కోడ్ అవసరం లేకుండా నేరుగా ప్యాక్ మరియు API కీని ఉచితంగా యాక్టివేట్ చేసుకోండి.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 text-left space-y-2 text-xs">
+                  <div className="flex items-center justify-between text-slate-300">
+                    <span>యాక్సెస్:</span>
+                    <span className="font-bold text-cyan-400">అన్ని 26 AI మోడల్స్</span>
+                  </div>
+                  <div className="flex items-center justify-between text-slate-300">
+                    <span>డేటా కోటా:</span>
+                    <span className="font-bold text-emerald-400 font-mono">
+                      {activeTab === 'plans' ? `${selectedPlan.dataPackGB} GB` : `+${selectedTopUp.dataMB} MB`}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-slate-300">
+                    <span>ఖరీదు (Cost):</span>
+                    <span className="font-black text-amber-400">₹0 (ఉచితం)</span>
+                  </div>
+                </div>
+
+                {/* 1-Click Instant Free Activation Button */}
+                <button
+                  onClick={handleProcessPayment}
+                  disabled={isProcessing}
+                  className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-400 via-emerald-400 to-cyan-400 text-slate-950 font-black text-sm hover:brightness-110 transition-all shadow-xl shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {isProcessing ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                      యాక్టివేట్ అవుతోంది...
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="w-5 h-5 text-slate-950 fill-current" />
+                      ఉచితంగా తక్షణమే యాక్టివేట్ చేయండి (Instant 1-Click Activation)
+                    </>
+                  )}
+                </button>
               </div>
-            </div>
-
-            <div className="space-y-2 max-w-md mx-auto">
-              <label className="text-xs font-medium text-slate-300 block">
-                UPI Reference VPA or 12-digit UTR (Optional):
-              </label>
-              <input
-                type="text"
-                value={utrRef}
-                onChange={(e) => setUtrRef(e.target.value)}
-                placeholder="Enter 12-digit UTR or your UPI ID"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-100 font-mono focus:outline-none focus:border-cyan-500"
-              />
-              <p className="text-[11px] text-slate-500">
-                After completing the payment in your payment app, click below to verify and generate your API key instantly.
-              </p>
-            </div>
-
-            {/* Complete Payment Button */}
-            <button
-              onClick={handleProcessPayment}
-              disabled={isProcessing}
-              className="w-full max-w-md mx-auto py-4 rounded-xl bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 text-slate-950 font-extrabold text-sm hover:brightness-110 transition-all shadow-xl shadow-cyan-500/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 block"
-            >
-              {isProcessing ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                  Verifying Payment & Minting API Key...
-                </>
-              ) : (
-                <>
-                  <ShieldCheck className="w-5 h-5" />
-                  I Have Paid - Verify & Activate API Key
-                </>
-              )}
-            </button>
+            )}
           </div>
         )}
 

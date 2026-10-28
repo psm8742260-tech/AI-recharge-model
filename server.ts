@@ -581,6 +581,11 @@ app.get('/api/plans', (req, res) => {
   res.json({
     plans: store.plans,
     topups: store.topups,
+    config: {
+      isPaymentEnabled: store.systemConfig.isPaymentEnabled,
+      qrCodeUrl: store.systemConfig.qrCodeUrl,
+      upiId: store.systemConfig.upiId,
+    }
   });
 });
 

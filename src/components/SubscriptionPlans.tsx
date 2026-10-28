@@ -19,6 +19,17 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({ onOpenRech
     return SUBSCRIPTION_PLANS;
   });
 
+  const [isPaymentEnabled, setIsPaymentEnabled] = useState<boolean>(() => {
+    try {
+      const cached = localStorage.getItem('airecharge_config');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (typeof parsed.isPaymentEnabled === 'boolean') return parsed.isPaymentEnabled;
+      }
+    } catch (e) {}
+    return false;
+  });
+
   useEffect(() => {
     const loadPlans = async () => {
       try {
@@ -28,6 +39,9 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({ onOpenRech
           if (data.plans && Array.isArray(data.plans) && data.plans.length > 0) {
             setPlans(data.plans);
             localStorage.setItem('airecharge_plans', JSON.stringify(data.plans));
+          }
+          if (data.config && typeof data.config.isPaymentEnabled === 'boolean') {
+            setIsPaymentEnabled(data.config.isPaymentEnabled);
           }
         }
       } catch (e) {
@@ -40,16 +54,26 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({ onOpenRech
     const handlePlansUpdated = (event: any) => {
       if (event.detail && Array.isArray(event.detail)) {
         setPlans(event.detail);
+      } else if (event.detail && Array.isArray(event.detail.plans)) {
+        setPlans(event.detail.plans);
       } else {
         loadPlans();
       }
     };
 
+    const handleConfigUpdated = (event: any) => {
+      if (event.detail && typeof event.detail.isPaymentEnabled === 'boolean') {
+        setIsPaymentEnabled(event.detail.isPaymentEnabled);
+      }
+    };
+
     window.addEventListener('airecharge_plans_updated', handlePlansUpdated);
+    window.addEventListener('airecharge_config_updated', handleConfigUpdated);
     window.addEventListener('storage', loadPlans);
 
     return () => {
       window.removeEventListener('airecharge_plans_updated', handlePlansUpdated);
+      window.removeEventListener('airecharge_config_updated', handleConfigUpdated);
       window.removeEventListener('storage', loadPlans);
     };
   }, []);
@@ -94,10 +118,18 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({ onOpenRech
                 )}
               </div>
 
-              <div className="flex items-baseline gap-1">
-                <span className="text-4xl font-black text-white font-mono">₹{plan.priceINR}</span>
-                <span className="text-slate-500 text-sm font-medium">/ total</span>
-              </div>
+              {isPaymentEnabled ? (
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl font-black text-white font-mono">₹{plan.priceINR}</span>
+                  <span className="text-slate-500 text-sm font-medium">/ total</span>
+                </div>
+              ) : (
+                <div className="flex items-baseline gap-2">
+                  <span className="text-lg font-black text-amber-400 font-mono bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-xl">
+                    ట్రైలర్ ఉచితం (Trailer Free)
+                  </span>
+                </div>
+              )}
 
               <div className="p-4 rounded-2xl bg-slate-950/50 border border-slate-800/50 space-y-3">
                 <div className="flex items-center justify-between">
