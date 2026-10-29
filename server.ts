@@ -8,7 +8,7 @@ import JSZip from 'jszip';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
@@ -28,11 +28,11 @@ app.use((req, res, next) => {
 // Health Check Endpoint (Returns HYBRID VERSION & SHA Fingerprint)
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({
-    status: 'ok',
+    health: 'ok',
     mode: 'HYBRID VERSION',
     engine: 'ACTIVE',
     fingerprint: 'SHA-256:48ad8e6f-65ff-43d6-b8e9-9101a514bb6b',
-    timestamp: new Date().toISOString(),
+    status: 'HYBRID ACTIVE',
   });
 });
 

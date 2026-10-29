@@ -27,7 +27,7 @@ export const TESTING_MODE = true;
 
 export const SYSTEM_INTEGRITY_LOCK = 'STRICT_ENFORCED';
 export const LAST_MODIFIED_BY = 'AI_ENGINEER_HYBRID_CORE';
-export const LAST_MODIFIED_TIME = '2026-10-27 21:05:00';
+export const LAST_MODIFIED_TIME = 'HYBRID CORE';
 
 export const getDisplayVersion = () => APP_VERSION_MODE;
 export const getBuildInfo = () => `${APP_VERSION_MODE} [${APP_ENGINE_STATUS}] [LOCK: ${SYSTEM_INTEGRITY_LOCK}]`;

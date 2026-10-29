@@ -30,7 +30,7 @@ async function createZip() {
   // Passenger Auto-Restart trigger folder and file
   const tmpDir = path.join(distDir, 'tmp');
   if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
-  fs.writeFileSync(path.join(tmpDir, 'restart.txt'), `Restart triggered at: ${new Date().toISOString()}\nMode: HYBRID VERSION\n`);
+  fs.writeFileSync(path.join(tmpDir, 'restart.txt'), `Restart triggered: HYBRID CORE\nMode: HYBRID VERSION\n`);
 
   // Minimal Production package.json for cPanel Node.js Selector
   const prodPkg = {

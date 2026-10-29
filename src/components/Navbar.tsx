@@ -1,6 +1,7 @@
 import React from 'react';
 import { Bot, Zap, LogOut, Lock, Database, Sparkles, Menu, FileArchive, Download } from 'lucide-react';
 import { UserAccount } from '../types';
+import { useTranslation, LanguageCode } from '../i18n';
 
 interface NavbarProps {
   user: UserAccount | null;
@@ -10,6 +11,7 @@ interface NavbarProps {
   onOpenAuth: () => void;
   onLogout: () => void;
   onOpenExportZip?: () => void;
+  language: LanguageCode;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -20,7 +22,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAuth,
   onLogout,
   onOpenExportZip,
+  language,
 }) => {
+  const { t } = useTranslation(language);
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm py-3">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -50,8 +54,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </div>
             <div className="flex flex-col justify-center">
-              <span className="text-xl sm:text-2xl font-black tracking-tighter text-slate-900 leading-tight">
-                AI RECHARGE MODELS
+              <span className="text-xl sm:text-2xl font-black tracking-tighter text-slate-900 leading-tight uppercase">
+                {t('models')}
               </span>
             </div>
           </a>
@@ -60,7 +64,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="flex flex-col items-end gap-1.5 shrink-0">
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] uppercase font-black tracking-widest px-2 py-0.5 bg-cyan-500 text-slate-950 rounded shadow-sm">
-                Gateway
+                {t('gateway_status')}
               </span>
             </div>
 
@@ -79,14 +83,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <button 
                     onClick={() => setActiveTab('analytics')} 
                     className="p-2 text-emerald-600 hover:text-emerald-700 transition-all font-bold"
-                    title="బిల్డింగ్ సెక్షన్ (మూడు గీతలు)"
+                    title={t('analytics')}
                   >
                     <Menu className="w-6 h-6" />
                   </button>
                   <button 
                     onClick={onOpenAuth} 
                     className="p-1.5 text-slate-700 hover:text-emerald-600 transition-all"
-                    title="లాగిన్ పేజీకి వెళ్ళండి"
+                    title={t('logout')}
                   >
                     <LogOut className="w-4 h-4" />
                   </button>

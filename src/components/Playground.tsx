@@ -146,6 +146,12 @@ console.log('Magic Receipt:', data.magicReceipt);`;
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
+          <div className="mt-1 px-2 py-1 rounded-lg bg-slate-950 border border-slate-800 flex items-center gap-1.5 shadow-xl">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+            <span className="text-[11px] font-black bg-gradient-to-r from-cyan-400 via-emerald-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent tracking-tighter">
+              H
+            </span>
+          </div>
           <div>
             <div className="text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-1 flex items-center gap-1.5">
               <Terminal className="w-4 h-4" />

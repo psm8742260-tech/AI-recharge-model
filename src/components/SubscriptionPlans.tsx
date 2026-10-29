@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SUBSCRIPTION_PLANS, SubscriptionPlan } from '../data/plansData';
-import { Sparkles, CheckCircle2, ArrowRight, Zap } from 'lucide-react';
+import { Sparkles, CheckCircle2, ArrowRight, Zap, ArrowLeft } from 'lucide-react';
 
 interface SubscriptionPlansProps {
   onOpenRecharge: () => void;
@@ -82,17 +82,32 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({ onOpenRech
     <div className="space-y-12 pb-16 animate-in fade-in duration-500">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-800 pb-8">
-        <div className="space-y-2">
-          <div className="text-xs font-semibold uppercase tracking-widest text-cyan-400 flex items-center gap-2">
-            <Sparkles className="w-4 h-4" />
-            AI Subscription Plans
+        <div className="flex items-start gap-4">
+          <button
+            onClick={onBack}
+            className="mt-1 p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/50 transition-all shadow-lg cursor-pointer"
+            title="మళ్ళీ వెనక్కి వెళ్ళండి"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <div className="mt-1 px-2 py-1 rounded-lg bg-slate-950 border border-slate-800 flex items-center gap-1.5 shadow-xl">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+            <span className="text-[11px] font-black bg-gradient-to-r from-cyan-400 via-emerald-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent tracking-tighter">
+              H
+            </span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-            సబ్‌స్క్రిప్షన్ ప్లాన్‌లు (Subscription Plans)
-          </h2>
-          <p className="text-sm text-slate-400 max-w-xl">
-            మా ప్రీమియం AI మోడల్స్ మరియు హై-స్పీడ్ గేట్‌వే యాక్సెస్ కోసం ప్లాన్‌ని ఎంచుకోండి.
-          </p>
+          <div className="space-y-2">
+            <div className="text-xs font-semibold uppercase tracking-widest text-cyan-400 flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              AI Subscription Plans
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+              సబ్‌స్క్రిప్షన్ ప్లాన్‌లు (Subscription Plans)
+            </h2>
+            <p className="text-sm text-slate-400 max-w-xl">
+              మా ప్రీమియం AI మోడల్స్ మరియు హై-స్పీడ్ గేట్‌వే యాక్సెస్ కోసం ప్లాన్‌ని ఎంచుకోండి.
+            </p>
+          </div>
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TOP_UP_PACKS, TopUpPack } from '../data/plansData';
-import { Database, Zap, Sparkles, CheckCircle2, ArrowRight, ShieldCheck, Plus, Gift } from 'lucide-react';
+import { Database, Zap, Sparkles, CheckCircle2, ArrowRight, ShieldCheck, Plus, Gift, ArrowLeft } from 'lucide-react';
 
 interface DataPacksProps {
   onOpenRecharge: () => void;
@@ -85,17 +85,32 @@ export const DataPacks: React.FC<DataPacksProps> = ({ onOpenRecharge, onBack }) 
     <div className="space-y-12 pb-16 animate-in fade-in duration-500">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-800 pb-8">
-        <div className="space-y-2">
-          <div className="text-xs font-semibold uppercase tracking-widest text-cyan-400 flex items-center gap-2">
-            <Database className="w-4 h-4" />
-            AI Model Data Ecosystem
+        <div className="flex items-start gap-4">
+          <button
+            onClick={onBack}
+            className="mt-1 p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/50 transition-all shadow-lg cursor-pointer"
+            title="మళ్ళీ వెనక్కి వెళ్ళండి"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <div className="mt-1 px-2 py-1 rounded-lg bg-slate-950 border border-slate-800 flex items-center gap-1.5 shadow-xl">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+            <span className="text-[11px] font-black bg-gradient-to-r from-cyan-400 via-emerald-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent tracking-tighter">
+              H
+            </span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-            డేటా ప్యాక్‌లు (Data Packs)
-          </h2>
-          <p className="text-sm text-slate-400 max-w-xl">
-            అడ్మిన్ ద్వారా కాన్ఫిగర్ చేయబడిన లైవ్ డేటా ప్యాక్‌లు. మీ వినియోగానికి కావలసిన అదనపు డేటాను ఇక్కడ తక్షణమే యాడ్ చేసుకోండి.
-          </p>
+          <div className="space-y-2">
+            <div className="text-xs font-semibold uppercase tracking-widest text-cyan-400 flex items-center gap-2">
+              <Database className="w-4 h-4" />
+              AI Model Data Ecosystem
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+              డేటా ప్యాక్‌లు (Data Packs)
+            </h2>
+            <p className="text-sm text-slate-400 max-w-xl">
+              అడ్మిన్ ద్వారా కాన్ఫిగర్ చేయబడిన లైవ్ డేటా ప్యాక్‌లు. మీ వినియోగానికి కావలసిన అదనపు డేటాను ఇక్కడ తక్షణమే యాడ్ చేసుకోండి.
+            </p>
+          </div>
         </div>
 
         {/* Status Mode Badge */}

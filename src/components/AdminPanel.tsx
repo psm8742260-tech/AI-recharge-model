@@ -551,6 +551,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
+            <div className="px-2 py-1 rounded-lg bg-slate-950 border border-slate-800 flex items-center gap-1.5 shadow-xl ml-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+              <span className="text-[11px] font-black bg-gradient-to-r from-cyan-400 via-emerald-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent tracking-tighter">
+                H
+              </span>
+            </div>
           </div>
           <div>
             <div className="text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-1 flex items-center gap-1.5">
@@ -567,42 +573,62 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          {/* Master Amounts & Payment Toggle Switch (Trailer Mode) */}
           {config && (
-            <div className="flex items-center gap-3 p-2 px-3.5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl">
-              <div className="flex flex-col text-right">
-                <span className="text-[10px] uppercase font-black tracking-wider text-slate-400">
-                  అమౌంట్స్ & పేమెంట్ మోడ్ (Amounts ON/OFF)
-                </span>
-                <span className={`text-xs font-bold flex items-center justify-end gap-1.5 ${config.isPaymentEnabled ? 'text-emerald-400' : 'text-amber-400'}`}>
-                  <span className={`w-2 h-2 rounded-full ${config.isPaymentEnabled ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-                  {config.isPaymentEnabled ? 'ఆన్ (ON): ధరలు కనిపిస్తాయి' : 'ఆఫ్ (OFF): ట్రైలర్ మోడ్ (Free)'}
-                </span>
+            <>
+              <div className="flex items-center gap-2 p-1.5 px-2.5 rounded-xl bg-slate-950 border border-slate-800 shadow-xl">
+                <div className="flex flex-col text-right">
+                  <span className="text-[9px] uppercase font-black tracking-tighter text-slate-400">
+                    అమౌంట్స్ (Amounts)
+                  </span>
+                  <span className={`text-[10px] font-bold flex items-center justify-end gap-1 ${config.isPaymentEnabled ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    {config.isPaymentEnabled ? 'ఆన్ (ON)' : 'ఆఫ్ (OFF)'}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleTogglePaymentMode}
+                  disabled={isSaving}
+                  aria-label="Toggle Amounts Mode"
+                  className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    config.isPaymentEnabled ? 'bg-emerald-500' : 'bg-slate-700'
+                  }`}
+                  title={config.isPaymentEnabled ? "అమౌంట్స్ ఆన్" : "అమౌంట్స్ ఆఫ్"}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                      config.isPaymentEnabled ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
               </div>
 
               <button
-                type="button"
-                onClick={handleTogglePaymentMode}
-                disabled={isSaving}
-                aria-label="Toggle Amounts Mode"
-                className={`relative inline-flex h-7 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  config.isPaymentEnabled ? 'bg-emerald-500' : 'bg-slate-700'
+                onClick={async () => {
+                  const newConfig = { ...config, isPaymentEnabled: !config.isPaymentEnabled };
+                  setConfig(newConfig);
+                  setIsSaving(true);
+                  try {
+                    await fetch('/api/admin/config', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ config: newConfig }),
+                    });
+                  } finally {
+                    setIsSaving(false);
+                  }
+                }}
+                className={`px-4 py-2 rounded-lg text-[10px] font-black transition-all flex items-center gap-1.5 border shadow-md ${
+                  config.isPaymentEnabled
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
+                    : 'bg-rose-500/10 border-rose-500/30 text-rose-400 hover:bg-rose-500/20'
                 }`}
-                title={config.isPaymentEnabled ? "అమౌంట్స్ ఆఫ్ చేయండి (ట్రైలర్ టెస్టింగ్ మోడ్)" : "అమౌంట్స్ ఆన్ చేయండి (ధరలు & QR కనిపిస్తాయి)"}
               >
-                <span
-                  className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
-                    config.isPaymentEnabled ? 'translate-x-7' : 'translate-x-0'
-                  }`}
-                />
+                <ShieldCheck className={`w-3.5 h-3.5 ${config.isPaymentEnabled ? 'animate-pulse' : ''}`} />
+                ACCESS: {config.isPaymentEnabled ? 'ON' : 'OFF'}
               </button>
-            </div>
+            </>
           )}
-
-          <div className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-[10px] font-bold text-slate-400 flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            {getDisplayVersion()}
-          </div>
         </div>
       </div>
 
@@ -748,45 +774,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
                 </div>
               </div>
 
-              {/* TRAILER_MODE_CARD - Dedicated Trailer vs Commercial Mode Switch */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-slate-950 border-2 border-slate-800 hover:border-cyan-500/40 transition-all shadow-xl">
-                <div className="space-y-1 max-w-lg">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-black uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                      అమౌంట్స్ & పేమెంట్ మోడ్ (Amounts ON/OFF - Trailer Switch)
-                    </span>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase font-mono ${
-                      config.isPaymentEnabled 
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-                        : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                    }`}>
-                      {config.isPaymentEnabled ? '🟢 ON: Commercial' : '⚪ OFF: Trailer Mode'}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    <strong>ఆన్ (ON) చేసినప్పుడు:</strong> యూజర్లందరికీ ప్లాన్‌లు మరియు డేటా ప్యాక్‌లలో ధరలు (₹), UPI QR కోడ్ మరియు పేమెంట్ గేట్‌వే స్పష్టంగా కనిపిస్తాయి.<br/>
-                    <strong>ఆఫ్ (OFF) చేసినప్పుడు:</strong> ట్రైలర్ టెస్టింగ్ సమయం కోసం అమౌంట్స్ అన్నీ యూజర్లకు కనిపించవు; 1-క్లిక్‌తో ఉచితంగా ప్యాక్‌లను యాక్టివేట్ చేసుకోవచ్చు.
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleTogglePaymentMode}
-                  disabled={isSaving}
-                  aria-label="Toggle Amounts Mode"
-                  className={`relative inline-flex h-8 w-16 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    config.isPaymentEnabled ? 'bg-emerald-500' : 'bg-slate-700'
-                  }`}
-                  title={config.isPaymentEnabled ? "అమౌంట్స్ ఆఫ్ చేయండి" : "అమౌంట్స్ ఆన్ చేయండి"}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
-                      config.isPaymentEnabled ? 'translate-x-8' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-              </div>
 
               <div className="flex items-center justify-between p-4 rounded-xl bg-slate-950 border border-slate-800">
                 <div className="flex items-center gap-3">
@@ -798,9 +785,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
                 </div>
                 <button
                   onClick={() => setConfig({ ...config, isMaintenanceMode: !config.isMaintenanceMode })}
-                  className={`w-12 h-6 rounded-full transition-colors relative ${config.isMaintenanceMode ? 'bg-amber-500' : 'bg-slate-800'}`}
+                  className={`w-10 h-5 rounded-full transition-colors relative ${config.isMaintenanceMode ? 'bg-amber-500' : 'bg-slate-800'}`}
                 >
-                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${config.isMaintenanceMode ? 'left-7' : 'left-1'}`} />
+                  <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${config.isMaintenanceMode ? 'left-5.5' : 'left-0.5'}`} />
                 </button>
               </div>
 
@@ -1231,32 +1218,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
               </div>
 
               <div className="pt-4 border-t border-slate-800 flex items-center justify-end gap-3">
-                {config && (
-                  <button
-                    onClick={async () => {
-                      const newConfig = { ...config, isPaymentEnabled: !config.isPaymentEnabled };
-                      setConfig(newConfig);
-                      setIsSaving(true);
-                      try {
-                        await fetch('/api/admin/config', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ config: newConfig }),
-                        });
-                      } finally {
-                        setIsSaving(false);
-                      }
-                    }}
-                    className={`px-4 py-2 rounded-lg text-[10px] font-black transition-all flex items-center gap-1.5 border shadow-md ${
-                      config.isPaymentEnabled
-                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
-                        : 'bg-rose-500/10 border-rose-500/30 text-rose-400 hover:bg-rose-500/20'
-                    }`}
-                  >
-                    <ShieldCheck className={`w-3.5 h-3.5 ${config.isPaymentEnabled ? 'animate-pulse' : ''}`} />
-                    ACCESS: {config.isPaymentEnabled ? 'ON' : 'OFF'}
-                  </button>
-                )}
                 <button
                   onClick={handleSaveSecurity}
                   disabled={isSaving}

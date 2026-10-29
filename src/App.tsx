@@ -15,7 +15,9 @@ import { DataPacks } from './components/DataPacks';
 import { SubscriptionPlans } from './components/SubscriptionPlans';
 import { ExportModal } from './components/ExportModal';
 import { ProfileModal } from './components/ProfileModal';
-import { Bot, Key, Sparkles, ShieldCheck, Heart, ArrowLeft, Receipt, LogOut, Settings, BarChart2, User as UserIcon } from 'lucide-react';
+import { LanguageModal, LanguageCode } from './components/LanguageModal';
+import { useTranslation } from './i18n';
+import { Bot, Key, Sparkles, ShieldCheck, Heart, ArrowLeft, Receipt, LogOut, Settings, BarChart2, User as UserIcon, Languages } from 'lucide-react';
 
 import { getDisplayVersion } from './version';
 
@@ -97,6 +99,12 @@ export default function App() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [playgroundModelId, setPlaygroundModelId] = useState<string>('deepseek-v3');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
+  const [language, setLanguage] = useState<LanguageCode>(() => {
+    return (localStorage.getItem('airecharge_lang') as LanguageCode) || 'en';
+  });
+  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
+  const { t } = useTranslation(language);
 
   // Load user data on mount
   const fetchUserData = async (): Promise<boolean> => {
@@ -229,6 +237,7 @@ export default function App() {
         onOpenRecharge={() => setIsRechargeOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
         onOpenExportZip={() => setIsExportOpen(true)}
+        language={language}
         onLogout={() => {
           setUser(null);
           setIsSidebarOpen(false);
@@ -306,8 +315,8 @@ export default function App() {
               >
                 <Bot className="w-5 h-5 text-cyan-400" /> 
                 <div className="flex flex-col text-left">
-                  <span>Usage (వినియోగం & ఎంబీ)</span>
-                  <span className="text-[10px] text-slate-500 font-normal">ఎంత వాడారు • బ్యాలెన్స్ ఎంబీ</span>
+                  <span>{t('usage')}</span>
+                  <span className="text-[10px] text-slate-500 font-normal">{t('usage_desc')}</span>
                 </div>
               </button>
 
@@ -322,8 +331,8 @@ export default function App() {
               >
                 <Key className="w-5 h-5 text-cyan-400" /> 
                 <div className="flex flex-col text-left">
-                  <span>API keys (కీలు & లాక్)</span>
-                  <span className="text-[10px] text-slate-500 font-normal">పర్సనల్ కీ • లాక్ స్టేటస్</span>
+                  <span>{t('api_keys')}</span>
+                  <span className="text-[10px] text-slate-500 font-normal">{t('keys_desc')}</span>
                 </div>
               </button>
 
@@ -334,8 +343,8 @@ export default function App() {
               >
                 <Sparkles className="w-5 h-5 text-emerald-400" /> 
                 <div className="flex flex-col text-left">
-                  <span>Top up (రీచార్జ్ ప్యాక్స్)</span>
-                  <span className="text-[10px] text-slate-500 font-normal">డేటా ప్యాక్స్ • తక్షణ టాప్-అప్</span>
+                  <span>{t('top_up')}</span>
+                  <span className="text-[10px] text-slate-500 font-normal">{t('top_up_desc')}</span>
                 </div>
               </button>
 
@@ -350,8 +359,8 @@ export default function App() {
               >
                 <Receipt className="w-5 h-5 text-cyan-400" /> 
                 <div className="flex flex-col text-left">
-                  <span>Billing (బిల్లింగ్ & రసీదులు)</span>
-                  <span className="text-[10px] text-slate-500 font-normal">మ్యాజిక్ రసీదులు • ఇన్‌వాయిస్‌లు</span>
+                  <span>{t('billing')}</span>
+                  <span className="text-[10px] text-slate-500 font-normal">{t('billing_desc')}</span>
                 </div>
               </button>
 
@@ -366,22 +375,31 @@ export default function App() {
               >
                 <UserIcon className="w-5 h-5 text-rose-400" /> 
                 <div className="flex flex-col text-left">
-                  <span>Profile (ప్రొఫైల్ సెట్టింగ్స్)</span>
-                  <span className="text-[10px] text-slate-500 font-normal">పేరు • ఫోటో మార్చుకోండి</span>
+                  <span>{t('profile')}</span>
+                  <span className="text-[10px] text-slate-500 font-normal">{t('profile_desc')}</span>
                 </div>
               </button>
             </nav>
 
             {/* BOTTOM SECTION: SETTINGS & SERVER CONNECTION */}
             <div className="p-4 border-t border-slate-800 space-y-2 bg-slate-950/30">
-              <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-[11px] text-slate-400">
-                <div className="flex items-center justify-between text-cyan-400 font-bold mb-1">
-                  <span>Gateway Status</span>
-                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400">ONLINE</span>
-                </div>
-                <div className="font-mono text-[10px] text-slate-300 truncate">
-                  arm.phrscrowd.online
-                </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsLanguageOpen(true)}
+                  className="flex-1 flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-cyan-500/50 transition-all group cursor-pointer shadow-lg"
+                  title="భాషను మార్చుకోండి (Select Language)"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-slate-800 text-cyan-400 group-hover:bg-cyan-500 group-hover:text-slate-950 transition-colors">
+                      <Languages className="w-4 h-4" />
+                    </div>
+                    <div className="flex flex-col text-left">
+                      <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest">{t('select_language')}</span>
+                      <span className="text-xs font-bold text-white">{t('choose_lang')}</span>
+                    </div>
+                  </div>
+                  <Settings className="w-4 h-4 text-slate-500 group-hover:rotate-90 transition-transform duration-500" />
+                </button>
               </div>
 
               <button
@@ -395,7 +413,7 @@ export default function App() {
                 className="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 border border-slate-800 hover:border-rose-500/30 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
-                <span>లాగౌట్ (Logout)</span>
+                <span>{t('logout')}</span>
               </button>
             </div>
           </div>
@@ -534,6 +552,16 @@ export default function App() {
         onUpdate={(updatedUser) => {
           setUser(updatedUser);
           localStorage.setItem('airecharge_user_account', JSON.stringify(updatedUser));
+        }}
+      />
+
+      <LanguageModal
+        isOpen={isLanguageOpen}
+        onClose={() => setIsLanguageOpen(false)}
+        currentLanguage={language}
+        onSelectLanguage={(code) => {
+          setLanguage(code);
+          localStorage.setItem('airecharge_lang', code);
         }}
       />
 
