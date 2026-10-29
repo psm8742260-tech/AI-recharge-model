@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Zap, Sparkles, Settings, Database, Save, Trash2, ShieldAlert, ShieldCheck, ArrowLeft, CreditCard, QrCode, Upload, FileArchive, Lock, Key, CheckCircle2, Loader2, Download, HardDrive, Check, Copy, ExternalLink, FolderDown, GitBranch, RefreshCw, Server, Terminal } from 'lucide-react';
-import { SubscriptionPlan, TopUpPack } from '../data/plansData';
+import { SubscriptionPlan, TopUpPack, SUBSCRIPTION_PLANS, TOP_UP_PACKS } from '../data/plansData';
 import { UserAccount } from '../types';
 import { getDisplayVersion } from '../version';
 
@@ -26,14 +26,56 @@ interface AdminConfig {
   qrCodeUrl?: string;
 }
 
+const DEFAULT_ADMIN_CONFIG: AdminConfig = {
+  gatewayName: 'AI Recharge HYBRID GATEWAY',
+  tokenDeductionMultiplier: 1.15,
+  defaultDailyLimitMB: 800,
+  isMaintenanceMode: false,
+  isPaymentEnabled: true,
+  hybridEngineStatus: 'ACTIVE',
+  adminEmail: 'psm8742260@gmail.com',
+  adminMobile: '8466062260',
+  adminPassword: '2634T',
+  masterPin: '6606.0k',
+  upiId: 'psm8742260@upi',
+  qrCodeUrl: ''
+};
+
 export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExportZip, onLoginSuccess }) => {
   const [activeTab, setActiveTab] = useState(0);
-  const [config, setConfig] = useState<AdminConfig | null>(null);
+  const [config, setConfig] = useState<AdminConfig>(() => {
+    try {
+      const cached = localStorage.getItem('airecharge_config');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && typeof parsed === 'object') return { ...DEFAULT_ADMIN_CONFIG, ...parsed };
+      }
+    } catch (e) {}
+    return DEFAULT_ADMIN_CONFIG;
+  });
   const [users, setUsers] = useState<UserAccount[]>([]);
   const [receipts, setReceipts] = useState<any[]>([]);
-  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
-  const [topups, setTopups] = useState<TopUpPack[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>(() => {
+    try {
+      const cached = localStorage.getItem('airecharge_plans');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return SUBSCRIPTION_PLANS;
+  });
+  const [topups, setTopups] = useState<TopUpPack[]>(() => {
+    try {
+      const cached = localStorage.getItem('airecharge_topups');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return TOP_UP_PACKS;
+  });
+  const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [savingPlanId, setSavingPlanId] = useState<string | null>(null);
   const [savedPlanIds, setSavedPlanIds] = useState<{ [id: string]: boolean }>({});
@@ -125,20 +167,37 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
         } catch (e) {}
       }
 
+      const cachedTopups = localStorage.getItem('airecharge_topups');
+      if (cachedTopups) {
+        try {
+          const parsed = JSON.parse(cachedTopups);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setTopups(parsed);
+          }
+        } catch (e) {}
+      }
+
       const res = await fetch('/api/admin/config');
       if (res.ok) {
         const data = await res.json();
         if (data.config) {
-          setConfig(data.config);
+          setConfig(prev => ({ ...DEFAULT_ADMIN_CONFIG, ...data.config }));
           if (data.plans && Array.isArray(data.plans) && data.plans.length > 0) {
             setPlans(data.plans);
             localStorage.setItem('airecharge_plans', JSON.stringify(data.plans));
+          } else {
+            setPlans(SUBSCRIPTION_PLANS);
           }
-          setTopups(data.topups || []);
-          setAdminEmail(data.config.adminEmail || '');
-          setAdminMobile(data.config.adminMobile || '');
-          setAdminPassword(data.config.adminPassword || '');
-          setMasterPin(data.config.masterPin || '');
+          if (data.topups && Array.isArray(data.topups) && data.topups.length > 0) {
+            setTopups(data.topups);
+            localStorage.setItem('airecharge_topups', JSON.stringify(data.topups));
+          } else {
+            setTopups(TOP_UP_PACKS);
+          }
+          setAdminEmail(data.config.adminEmail || 'psm8742260@gmail.com');
+          setAdminMobile(data.config.adminMobile || '8466062260');
+          setAdminPassword(data.config.adminPassword || '2634T');
+          setMasterPin(data.config.masterPin || '6606.0k');
         }
       }
     } catch (err) {
@@ -531,7 +590,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
   }
 
   return (
-    <div className="space-y-8 pb-16">
+    <div className="space-y-6 pb-16 bg-slate-950 border-2 border-slate-800 p-4 sm:p-8 rounded-3xl shadow-2xl text-slate-100 max-w-7xl mx-auto">
       {/* Toast Notification */}
       {toastNotification && (
         <div className="fixed top-5 right-5 z-50 p-4 rounded-2xl bg-slate-900 border-2 border-cyan-500 text-white shadow-2xl flex items-center gap-3 animate-in slide-in-from-top-3 duration-300 max-w-md">
@@ -540,95 +599,55 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-800 pb-6">
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onBack}
-              className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/50 transition-all shadow-lg cursor-pointer"
-              title="మళ్ళీ వెనక్కి వెళ్ళండి"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </button>
-            <div className="px-2 py-1 rounded-lg bg-slate-950 border border-slate-800 flex items-center gap-1.5 shadow-xl ml-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
-              <span className="text-[11px] font-black bg-gradient-to-r from-cyan-400 via-emerald-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent tracking-tighter">
-                H
+      {/* Top Header Card */}
+      <div className="bg-slate-900/90 border border-slate-800 p-5 rounded-2xl shadow-xl space-y-4">
+        {/* Top Action Bar */}
+        <div className="flex items-center justify-between gap-2 w-full">
+          <button
+            onClick={onBack}
+            className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 hover:text-cyan-400 hover:border-cyan-500/50 transition-all shadow-lg cursor-pointer flex items-center gap-2 shrink-0 text-xs font-bold"
+            title="మళ్ళీ వెనక్కి వెళ్ళండి"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>వెనక్కి</span>
+          </button>
+
+          <button
+            onClick={handleTogglePaymentMode}
+            className={`px-3 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 border shadow-xl cursor-pointer shrink-0 active:scale-95 ${
+              config.isPaymentEnabled
+                ? 'bg-emerald-500/20 border-emerald-500/80 text-emerald-300 hover:bg-emerald-500/30 shadow-emerald-500/20 ring-2 ring-emerald-500/40'
+                : 'bg-rose-500/20 border-rose-500/80 text-rose-300 hover:bg-rose-500/30 shadow-rose-500/20 ring-2 ring-rose-500/40'
+            }`}
+            title="అడ్మిన్ యాక్సెస్ / అమౌంట్స్ ఆన్/ఆఫ్"
+          >
+            <ShieldCheck className={`w-4 h-4 shrink-0 ${config.isPaymentEnabled ? 'animate-pulse text-emerald-400' : 'text-rose-400'}`} />
+            <span className="text-[12px] uppercase tracking-wide font-black">
+              {config.isPaymentEnabled ? '🟢 ACCESS: ON' : '🔴 ACCESS: OFF'}
+            </span>
+          </button>
+        </div>
+
+        {/* Title Section */}
+        <div className="pt-2 border-t border-slate-800/80">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <div className="text-xs font-black uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+              <Shield className="w-4 h-4 text-cyan-400 shrink-0" />
+              <span>Master Control Admin Panel</span>
+            </div>
+            <div className="px-2 py-0.5 rounded-lg bg-slate-950 border border-slate-800 flex items-center gap-1.5 shadow-md">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+              <span className="text-[10px] font-black bg-gradient-to-r from-cyan-400 via-emerald-400 to-indigo-400 bg-clip-text text-transparent tracking-tighter">
+                HYBRID GATEWAY
               </span>
             </div>
           </div>
-          <div>
-            <div className="text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-1 flex items-center gap-1.5">
-              <Shield className="w-4 h-4" />
-              Master Control Admin Panel
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
-              Gateway Management
-            </h2>
-            <p className="text-xs text-slate-400 mt-1">
-              Configure token economics, recharge plans, QR code gateway, and Amounts (ON/OFF).
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          {config && (
-            <>
-              <div className="flex items-center gap-2 p-1.5 px-2.5 rounded-xl bg-slate-950 border border-slate-800 shadow-xl">
-                <div className="flex flex-col text-right">
-                  <span className="text-[9px] uppercase font-black tracking-tighter text-slate-400">
-                    అమౌంట్స్ (Amounts)
-                  </span>
-                  <span className={`text-[10px] font-bold flex items-center justify-end gap-1 ${config.isPaymentEnabled ? 'text-emerald-400' : 'text-amber-400'}`}>
-                    {config.isPaymentEnabled ? 'ఆన్ (ON)' : 'ఆఫ్ (OFF)'}
-                  </span>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleTogglePaymentMode}
-                  disabled={isSaving}
-                  aria-label="Toggle Amounts Mode"
-                  className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    config.isPaymentEnabled ? 'bg-emerald-500' : 'bg-slate-700'
-                  }`}
-                  title={config.isPaymentEnabled ? "అమౌంట్స్ ఆన్" : "అమౌంట్స్ ఆఫ్"}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
-                      config.isPaymentEnabled ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-              </div>
-
-              <button
-                onClick={async () => {
-                  const newConfig = { ...config, isPaymentEnabled: !config.isPaymentEnabled };
-                  setConfig(newConfig);
-                  setIsSaving(true);
-                  try {
-                    await fetch('/api/admin/config', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ config: newConfig }),
-                    });
-                  } finally {
-                    setIsSaving(false);
-                  }
-                }}
-                className={`px-4 py-2 rounded-lg text-[10px] font-black transition-all flex items-center gap-1.5 border shadow-md ${
-                  config.isPaymentEnabled
-                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
-                    : 'bg-rose-500/10 border-rose-500/30 text-rose-400 hover:bg-rose-500/20'
-                }`}
-              >
-                <ShieldCheck className={`w-3.5 h-3.5 ${config.isPaymentEnabled ? 'animate-pulse' : ''}`} />
-                ACCESS: {config.isPaymentEnabled ? 'ON' : 'OFF'}
-              </button>
-            </>
-          )}
+          <h2 className="text-xl sm:text-3xl font-black text-white tracking-tight">
+            Gateway Management
+          </h2>
+          <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+            Configure token economics, recharge plans, QR code gateway, and Amounts (ON/OFF).
+          </p>
         </div>
       </div>
 
@@ -728,10 +747,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
       {/* Tab Content Areas */}
       <div className="mt-8">
         {/* Tab 1/6: System Settings */}
-        {activeTab === 0 && config && (
+        {activeTab === 0 && (
           <div className="max-w-3xl space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-            <div className="p-6 rounded-2xl glass-panel space-y-6 border-slate-700/50">
+            <div className="p-6 rounded-2xl bg-slate-950/90 border border-slate-800 shadow-xl space-y-6 border-slate-700/50">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label className="text-xs font-bold text-slate-400 block mb-2">Gateway Instance Name</label>
@@ -810,7 +829,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {plans.map((plan) => (
-                <div key={plan.id} className="p-6 rounded-2xl glass-panel space-y-4 border-slate-700/50">
+                <div key={plan.id} className="p-6 rounded-2xl bg-slate-950/90 border border-slate-800 shadow-xl space-y-4 border-slate-700/50">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold text-white">PE {plan.name}</h3>
                     <div className="p-1 rounded bg-slate-800 text-[10px] font-mono text-cyan-400">{plan.id}</div>
@@ -918,10 +937,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
         )}
 
         {/* Tab 3/6: QR Code & Payment Config */}
-        {activeTab === 2 && config && (
+        {activeTab === 2 && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* QR Code & UPI Config */}
-            <div className="p-6 rounded-2xl glass-panel space-y-6 border-slate-700/50 max-w-2xl">
+            <div className="p-6 rounded-2xl bg-slate-950/90 border border-slate-800 shadow-xl space-y-6 border-slate-700/50 max-w-2xl">
               <h3 className="text-sm font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
                 <QrCode className="w-4 h-4 text-cyan-400" />
                 QR Code & UPI Gateway Settings
@@ -1110,7 +1129,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
             </div>
 
             {/* PWA / TWA Integration Details */}
-            <div className="p-6 rounded-2xl glass-panel space-y-4 border-slate-700/50 max-w-2xl">
+            <div className="p-6 rounded-2xl bg-slate-950/90 border border-slate-800 shadow-xl space-y-4 border-slate-700/50 max-w-2xl">
               <div className="flex items-center gap-3">
                 <Zap className="w-5 h-5 text-cyan-400" />
                 <h4 className="text-sm font-bold text-white">PWA & Mobile Web Support</h4>
@@ -1124,7 +1143,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
 
         {/* Tab 4/6: User Database */}
         {activeTab === 3 && (
-          <div className="glass-panel overflow-hidden border-slate-700/50 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="bg-slate-950/90 border border-slate-800 shadow-xl overflow-hidden border-slate-700/50 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -1170,7 +1189,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
         {/* Tab 5/6: Security & Credentials */}
         {activeTab === 4 && (
           <div className="max-w-xl space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="p-6 rounded-2xl glass-panel space-y-6 border-slate-700/50">
+            <div className="p-6 rounded-2xl bg-slate-950/90 border border-slate-800 shadow-xl space-y-6 border-slate-700/50">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <ShieldAlert className="w-4 h-4 text-red-500" />
                 Admin Master Credentials & Security
@@ -1237,11 +1256,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
         {activeTab === 5 && (
           <div className="max-w-4xl space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Main ZIP Download Card */}
-            <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border border-emerald-500/30 shadow-2xl shadow-emerald-950/20 relative overflow-hidden">
+            <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border border-emerald-500/30 shadow-2xl shadow-emerald-950/20 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
               <div className="absolute bottom-0 left-0 w-60 h-60 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
 
-              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-800">
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
                 <div className="flex items-start gap-4">
                   <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-cyan-500 p-0.5 shadow-lg shadow-emerald-500/30 shrink-0">
                     <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
@@ -1260,7 +1279,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
                         పూర్తి ప్యాకేజీ (~37 MB)
                       </span>
                     </div>
-                    <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
+                    <p className="text-xs text-slate-300 mt-0.5 max-w-xl">
                       మీ AI రీఛార్జ్ మోడల్స్ పోర్టల్‌ని నేరుగా cPanel వెబ్ హోస్టింగ్‌లో అప్‌లోడ్ చేసి లైవ్ రన్ చేయడానికి అవసరమైన పూర్తి ప్రొడక్షన్ బండిల్ (పరిమాణం: {bundleSize} / ~37 MB).
                     </p>
                   </div>
@@ -1271,7 +1290,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
                     type="button"
                     onClick={handleDownloadZip}
                     disabled={isDownloadingZip}
-                    className="px-6 py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black text-sm shadow-xl shadow-emerald-500/25 transition-all active:scale-95 flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-80"
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black text-xs shadow-xl shadow-emerald-500/25 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-80"
                   >
                     {isDownloadingZip ? (
                       <>
@@ -1296,7 +1315,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
                     download="cpanel_public_html.zip"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-4 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-xs border border-slate-700 flex items-center justify-center gap-2 transition-all shadow-md text-center cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-xs border border-slate-700 flex items-center justify-center gap-2 transition-all shadow-md text-center cursor-pointer"
                     title="డైరెక్ట్ లింక్ డౌన్‌లోడ్"
                   >
                     <FolderDown className="w-4 h-4 text-cyan-400" />
@@ -1306,7 +1325,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
               </div>
 
               {/* Action Buttons Row */}
-              <div className="relative z-10 pt-5 flex flex-wrap items-center justify-between gap-3">
+              <div className="relative z-10 pt-3 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2 flex-wrap">
                   <button
                     type="button"
@@ -1499,12 +1518,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-cyan-950/30 border border-cyan-800/40 text-[11px] text-cyan-200/90 leading-relaxed flex items-start gap-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-bold text-cyan-100">గమనిక:</span> మీ ప్రాజెక్ట్‌లో <code className="text-cyan-300 font-mono">.github/workflows/deploy.yml</code> మరియు cPanel Git కోసం <code className="text-cyan-300 font-mono">.cpanel.yml</code> ఇప్పటికే పర్ఫెక్ట్‌గా సిద్ధం చేయబడ్డాయి. మీరు కేవలం మీ cPanel పాస్‌వర్డ్ <code className="text-cyan-300 font-mono">FTP_PASSWORD</code> గా ఇస్తే చాలు, ప్రతి పుష్ ఆటోమేటిక్‌గా సర్వర్‌కి చేరుతుంది!
-                  </div>
-                </div>
+
               </div>
             </div>
           </div>

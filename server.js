@@ -7,7 +7,7 @@ import dotenv from "dotenv";
 import JSZip from "jszip";
 dotenv.config();
 var app = express();
-var PORT = process.env.PORT || 3e3;
+var PORT = 3e3;
 app.use(express.json({ limit: "15mb" }));
 app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 app.use((req, res, next) => {
@@ -22,11 +22,11 @@ app.use((req, res, next) => {
 });
 app.get("/api/health", (req, res) => {
   res.json({
-    status: "ok",
+    health: "ok",
     mode: "HYBRID VERSION",
     engine: "ACTIVE",
     fingerprint: "SHA-256:48ad8e6f-65ff-43d6-b8e9-9101a514bb6b",
-    timestamp: (/* @__PURE__ */ new Date()).toISOString()
+    status: "HYBRID ACTIVE"
   });
 });
 var ai = new GoogleGenAI({
@@ -535,6 +535,21 @@ app.get("/api/user/me", (req, res) => {
     transactions: store.transactions
   });
 });
+app.put("/api/user/profile", (req, res) => {
+  const { name, avatar } = req.body;
+  const authEmail = (req.headers["x-user-email"] || "").trim().toLowerCase();
+  const authMobile = (req.headers["x-user-mobile"] || "").replace(/\D/g, "");
+  let user = store.users.find(
+    (u) => authEmail && u.email && u.email.toLowerCase() === authEmail || authMobile && u.mobile && u.mobile.replace(/\D/g, "") === authMobile
+  );
+  if (!user) {
+    return res.status(404).json({ success: false, message: "User not found" });
+  }
+  if (name) user.name = name;
+  if (avatar) user.avatar = avatar;
+  saveStore();
+  res.json({ success: true, user });
+});
 app.post("/api/auth/login", (req, res) => {
   const { email, name, provider, password, mobile, isAdminRequest } = req.body;
   const cleanEmail = (email || "").trim().toLowerCase();
@@ -548,12 +563,13 @@ app.post("/api/auth/login", (req, res) => {
   );
   if (!user) {
     const apiKey = isFinalAdmin ? "phrs-7f9a2d8e41bc90a57f9a2d8e41bc90a5" : generateApiKey();
+    const defaultAvatar = isFinalAdmin ? "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150" : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150";
     user = {
       id: isFinalAdmin ? "usr_admin_master" : `usr_${Date.now()}`,
       email: cleanEmail || (cleanMobile ? `${cleanMobile}@airecharge.user` : "user@airecharge.com"),
-      name: isFinalAdmin ? "Purushotham (Admin)" : name || (cleanEmail ? cleanEmail.split("@")[0] : `User ${cleanMobile.slice(-4)}`),
+      name: isFinalAdmin ? "Purushotham" : name || (cleanEmail ? cleanEmail.split("@")[0] : `User ${cleanMobile.slice(-4)}`),
       mobile: cleanMobile || (isFinalAdmin ? "8466062260" : ""),
-      avatar: isFinalAdmin ? "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150" : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
+      avatar: defaultAvatar,
       activePlanId: isFinalAdmin ? "plan-master" : "plan-1m",
       activePlanName: isFinalAdmin ? "Master Admin Unlimited Access" : "1 Month Starter Pack",
       planDurationMonths: isFinalAdmin ? 12 : 1,
@@ -582,6 +598,9 @@ app.post("/api/auth/login", (req, res) => {
   } else {
     if (isFinalAdmin) {
       user.isAdmin = true;
+      if (!user.name || user.name.includes("User ") || user.name.includes("@")) {
+        user.name = "Purushotham";
+      }
       if (!user.mobile && cleanMobile) user.mobile = cleanMobile;
       if (!user.email && cleanEmail) user.email = cleanEmail;
       user.dataPackMBRemaining = Math.max(user.dataPackMBRemaining, 1024e3);
@@ -589,6 +608,9 @@ app.post("/api/auth/login", (req, res) => {
     } else {
       if (cleanMobile && !user.mobile) user.mobile = cleanMobile;
       if (cleanEmail && (!user.email || user.email.includes("@airecharge.user"))) user.email = cleanEmail;
+      if (name && (!user.name || user.name.includes("User ") || user.name.includes("@"))) {
+        user.name = name;
+      }
     }
     saveStore();
   }

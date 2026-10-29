@@ -238,6 +238,7 @@ export default function App() {
         onOpenAuth={() => setIsAuthOpen(true)}
         onOpenExportZip={() => setIsExportOpen(true)}
         language={language}
+        onOpenLanguage={() => setIsLanguageOpen(true)}
         onLogout={() => {
           setUser(null);
           setIsSidebarOpen(false);

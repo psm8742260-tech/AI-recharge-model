@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, Zap, LogOut, Lock, Database, Sparkles, Menu, FileArchive, Download } from 'lucide-react';
+import { Bot, Zap, LogOut, Lock, Database, Sparkles, Menu, FileArchive, Download, Settings } from 'lucide-react';
 import { UserAccount } from '../types';
 import { useTranslation, LanguageCode } from '../i18n';
 
@@ -12,6 +12,7 @@ interface NavbarProps {
   onLogout: () => void;
   onOpenExportZip?: () => void;
   language: LanguageCode;
+  onOpenLanguage: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -23,6 +24,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onLogout,
   onOpenExportZip,
   language,
+  onOpenLanguage,
 }) => {
   const { t } = useTranslation(language);
   return (
@@ -69,17 +71,22 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
 
             <div className="flex items-center gap-2">
-              {user && user.isAdmin && (
-                <button 
-                  onClick={() => setActiveTab('admin' as any)} 
-                  className="p-1.5 border rounded-lg transition-all shadow-md flex items-center justify-center bg-slate-900 border-cyan-500/50 text-cyan-400 animate-hybrid-engine-glow cursor-pointer"
-                  title="అడ్మిన్ మాస్టర్ ప్యానెల్ (Admin Panel)"
-                >
-                  <Lock className="w-5 h-5 text-cyan-400" />
-                </button>
-              )}
+              <button 
+                onClick={() => setActiveTab('admin' as any)} 
+                className="p-1.5 border rounded-lg transition-all shadow-md flex items-center justify-center bg-slate-900 border-cyan-500/50 text-cyan-400 animate-hybrid-engine-glow cursor-pointer"
+                title="అడ్మిన్ మాస్టర్ ప్యానెల్ (Admin Panel)"
+              >
+                <Lock className="w-5 h-5 text-cyan-400" />
+              </button>
               {user ? (
                 <>
+                  <button 
+                    onClick={onOpenLanguage} 
+                    className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 text-slate-600 hover:text-cyan-600 hover:border-cyan-500/50 transition-all shadow-sm cursor-pointer"
+                    title={t('select_language')}
+                  >
+                    <Settings className="w-5 h-5" />
+                  </button>
                   <button 
                     onClick={() => setActiveTab('analytics')} 
                     className="p-2 text-emerald-600 hover:text-emerald-700 transition-all font-bold"
@@ -96,12 +103,21 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </button>
                 </>
               ) : (
-                <button 
-                  onClick={onOpenAuth} 
-                  className="px-3 py-1 text-xs font-extrabold bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-lg transition-all shadow-md"
-                >
-                  Sign In
-                </button>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={onOpenLanguage} 
+                    className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 text-slate-600 hover:text-cyan-600 hover:border-cyan-500/50 transition-all shadow-sm cursor-pointer"
+                    title={t('select_language')}
+                  >
+                    <Settings className="w-5 h-5" />
+                  </button>
+                  <button 
+                    onClick={onOpenAuth} 
+                    className="px-3 py-1 text-xs font-extrabold bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-lg transition-all shadow-md"
+                  >
+                    Sign In
+                  </button>
+                </div>
               )}
             </div>
           </div>
