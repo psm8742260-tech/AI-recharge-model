@@ -15,6 +15,7 @@ import {
   ArrowLeft,
   CreditCard,
   Zap,
+  ExternalLink,
 } from 'lucide-react';
 
 interface PaymentGatewayModalProps {
@@ -82,6 +83,94 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
     } catch (e) {}
     return false;
   });
+  const [paytmNumber, setPaytmNumber] = useState('8466062260');
+  const [googlePayNumber, setGooglePayNumber] = useState('8466062260');
+  const [phonePeNumber, setPhonePeNumber] = useState('8466062260');
+  const [accountNumber, setAccountNumber] = useState('8466062260');
+  const [ifscCode, setIfscCode] = useState('PYTM0123456');
+  const [accountHolderName, setAccountHolderName] = useState('AI Recharge PSM');
+  const [bankName, setBankName] = useState('Paytm Payments Bank / SBI');
+  const [cardPaymentDetails, setCardPaymentDetails] = useState('RuPay, Visa, MasterCard, All Debit/Credit Cards & Net Banking');
+  const [isCardPaymentEnabled, setIsCardPaymentEnabled] = useState(true);
+  const [isCardSaved, setIsCardSaved] = useState(false);
+  const [copiedType, setCopiedType] = useState<string | null>(null);
+
+  const handleCopyPaymentInfo = (text: string, type: string) => {
+    navigator.clipboard.writeText(text).catch(() => {});
+    setCopiedType(type);
+    setTimeout(() => setCopiedType(null), 3000);
+  };
+
+  const handleOpenPaymentApp = (app: 'gpay' | 'phonepe' | 'paytm') => {
+    const amount = activeTab === 'plans' ? selectedPlan.priceINR : selectedTopUp.priceINR;
+    const targetUpi = (upiId || 'psm8742260@upi').trim();
+    const planTitle = activeTab === 'plans' ? selectedPlan.name : selectedTopUp.name;
+    const note = encodeURIComponent(`AI Recharge ${planTitle}`);
+
+    let androidIntent = '';
+    let fallbackScheme = '';
+    let appLabel = '';
+
+    if (app === 'gpay') {
+      appLabel = 'Google Pay';
+      androidIntent = `intent://pay?pa=${encodeURIComponent(targetUpi)}&pn=AI%20Recharge&am=${amount}&cu=INR&tn=${note}#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`;
+      fallbackScheme = `tez://upi/pay?pa=${encodeURIComponent(targetUpi)}&pn=AI%20Recharge&am=${amount}&cu=INR&tn=${note}`;
+    } else if (app === 'phonepe') {
+      appLabel = 'PhonePe';
+      androidIntent = `intent://pay?pa=${encodeURIComponent(targetUpi)}&pn=AI%20Recharge&am=${amount}&cu=INR&tn=${note}#Intent;scheme=upi;package=com.phonepe.app;end`;
+      fallbackScheme = `phonepe://pay?pa=${encodeURIComponent(targetUpi)}&pn=AI%20Recharge&am=${amount}&cu=INR&tn=${note}`;
+    } else if (app === 'paytm') {
+      appLabel = 'Paytm';
+      androidIntent = `intent://pay?pa=${encodeURIComponent(targetUpi)}&pn=AI%20Recharge&am=${amount}&cu=INR&tn=${note}#Intent;scheme=upi;package=net.one97.paytm;end`;
+      fallbackScheme = `paytmmp://pay?pa=${encodeURIComponent(targetUpi)}&pn=AI%20Recharge&am=${amount}&cu=INR&tn=${note}`;
+    }
+
+    const universalUpi = `upi://pay?pa=${encodeURIComponent(targetUpi)}&pn=AI%20Recharge&am=${amount}&cu=INR&tn=${note}`;
+    const copyVal = app === 'gpay' 
+      ? (googlePayNumber || targetUpi) 
+      : app === 'phonepe' 
+      ? (phonePeNumber || targetUpi) 
+      : (paytmNumber || targetUpi);
+
+    navigator.clipboard.writeText(copyVal).catch(() => {});
+    setCopiedType(app);
+    setTimeout(() => setCopiedType(null), 3500);
+
+    const isAndroid = typeof navigator !== 'undefined' && /android/i.test(navigator.userAgent);
+    const targetUrl = isAndroid ? androidIntent : fallbackScheme;
+
+    try {
+      const a = document.createElement('a');
+      a.href = targetUrl;
+      a.target = '_top';
+      a.rel = 'noopener noreferrer';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        if (document.body.contains(a)) document.body.removeChild(a);
+      }, 200);
+    } catch (e) {
+      try {
+        if (window.top) window.top.location.href = fallbackScheme;
+        else window.location.href = fallbackScheme;
+      } catch (e2) {
+        window.open(universalUpi, '_top');
+      }
+    }
+  };
+
+  const handleSaveCardAndIfsc = () => {
+    const cardNum = accountNumber || '8466062260';
+    const ifsc = ifscCode || 'PYTM0123456';
+    const name = accountHolderName || 'AI Recharge PSM';
+    const bName = bankName || 'Paytm Payments Bank / SBI';
+
+    const fullInfo = `ఖాతా / కార్డ్ నంబరు: ${cardNum}\nIFSC కోడ్: ${ifsc}\nఖాతాదారుని పేరు: ${name}\nబ్యాంక్: ${bName}`;
+    navigator.clipboard.writeText(fullInfo).catch(() => {});
+    setIsCardSaved(true);
+    setCopiedType('cardsave');
+    setTimeout(() => setCopiedType(null), 4000);
+  };
 
   // Every time modal opens, ALWAYS reset to Board 1
   useEffect(() => {
@@ -123,6 +212,33 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
         if (event.detail.upiId) {
           setUpiId(event.detail.upiId);
         }
+        if (event.detail.paytmNumber !== undefined) {
+          setPaytmNumber(event.detail.paytmNumber);
+        }
+        if (event.detail.googlePayNumber !== undefined) {
+          setGooglePayNumber(event.detail.googlePayNumber);
+        }
+        if (event.detail.phonePeNumber !== undefined) {
+          setPhonePeNumber(event.detail.phonePeNumber);
+        }
+        if (event.detail.accountNumber !== undefined) {
+          setAccountNumber(event.detail.accountNumber);
+        }
+        if (event.detail.ifscCode !== undefined) {
+          setIfscCode(event.detail.ifscCode);
+        }
+        if (event.detail.accountHolderName !== undefined) {
+          setAccountHolderName(event.detail.accountHolderName);
+        }
+        if (event.detail.bankName !== undefined) {
+          setBankName(event.detail.bankName);
+        }
+        if (event.detail.cardPaymentDetails !== undefined) {
+          setCardPaymentDetails(event.detail.cardPaymentDetails);
+        }
+        if (typeof event.detail.isCardPaymentEnabled === 'boolean') {
+          setIsCardPaymentEnabled(event.detail.isCardPaymentEnabled);
+        }
       }
     };
 
@@ -154,6 +270,25 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
         }
       }
 
+      const cachedConfig = localStorage.getItem('airecharge_config');
+      if (cachedConfig) {
+        try {
+          const cfg = JSON.parse(cachedConfig);
+          if (cfg.upiId) setUpiId(cfg.upiId);
+          if (cfg.qrCodeUrl !== undefined) setQrCodeUrl(cfg.qrCodeUrl);
+          if (typeof cfg.isPaymentEnabled === 'boolean') setIsPaymentEnabled(cfg.isPaymentEnabled);
+          if (cfg.paytmNumber) setPaytmNumber(cfg.paytmNumber);
+          if (cfg.googlePayNumber) setGooglePayNumber(cfg.googlePayNumber);
+          if (cfg.phonePeNumber) setPhonePeNumber(cfg.phonePeNumber);
+          if (cfg.accountNumber) setAccountNumber(cfg.accountNumber);
+          if (cfg.ifscCode) setIfscCode(cfg.ifscCode);
+          if (cfg.accountHolderName) setAccountHolderName(cfg.accountHolderName);
+          if (cfg.bankName) setBankName(cfg.bankName);
+          if (cfg.cardPaymentDetails) setCardPaymentDetails(cfg.cardPaymentDetails);
+          if (typeof cfg.isCardPaymentEnabled === 'boolean') setIsCardPaymentEnabled(cfg.isCardPaymentEnabled);
+        } catch (e) {}
+      }
+
       const res = await fetch('/api/admin/config');
       const data = await res.json();
       if (data.plans && data.plans.length > 0) {
@@ -171,6 +306,17 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
         if (data.config.qrCodeUrl !== undefined) setQrCodeUrl(data.config.qrCodeUrl);
         if (typeof data.config.isPaymentEnabled === 'boolean') {
           setIsPaymentEnabled(data.config.isPaymentEnabled);
+        }
+        if (data.config.paytmNumber) setPaytmNumber(data.config.paytmNumber);
+        if (data.config.googlePayNumber) setGooglePayNumber(data.config.googlePayNumber);
+        if (data.config.phonePeNumber) setPhonePeNumber(data.config.phonePeNumber);
+        if (data.config.accountNumber) setAccountNumber(data.config.accountNumber);
+        if (data.config.ifscCode) setIfscCode(data.config.ifscCode);
+        if (data.config.accountHolderName) setAccountHolderName(data.config.accountHolderName);
+        if (data.config.bankName) setBankName(data.config.bankName);
+        if (data.config.cardPaymentDetails) setCardPaymentDetails(data.config.cardPaymentDetails);
+        if (typeof data.config.isCardPaymentEnabled === 'boolean') {
+          setIsCardPaymentEnabled(data.config.isCardPaymentEnabled);
         }
       }
     } catch (err) {
@@ -534,26 +680,149 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
                     )}
                   </div>
 
-                  <div className="space-y-1">
-                    <div className="text-xs text-slate-400 font-medium">Scan using PhonePe, Google Pay, Paytm or BHIM</div>
-                    <div className="flex items-center justify-center gap-2 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 w-fit mx-auto">
-                      <span className="text-sm font-extrabold text-cyan-300 font-mono">{upiId}</span>
+                  {/* Direct Payment Action Buttons (Google Pay, PhonePe, Paytm, Card Saving) */}
+                  <div className="space-y-3 pt-3 border-t border-slate-800 text-left">
+                    <div className="text-[11px] font-bold text-slate-400 text-center uppercase tracking-wider">
+                      డైరెక్ట్ చెల్లింపు బటన్లు (Payment Action Buttons)
+                    </div>
+
+                    {/* 4 Pure Compact Round Icons Only */}
+                    <div className="flex items-center justify-center gap-4 py-1">
+                      {/* 1. Google Pay Icon */}
                       <button
                         type="button"
-                        onClick={() => copyApiKey(upiId)}
-                        className="text-[10px] text-cyan-400 font-bold hover:underline"
+                        onClick={() => handleOpenPaymentApp('gpay')}
+                        className="w-12 h-12 rounded-full bg-white hover:bg-slate-100 border-2 border-blue-400 hover:border-blue-500 shadow-lg flex items-center justify-center cursor-pointer transition-all active:scale-90 shrink-0"
+                        title="Google Pay"
                       >
-                        {copiedKey ? 'Copied' : 'Copy'}
+                        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
+                          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+                          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+                        </svg>
+                      </button>
+
+                      {/* 2. PhonePe Icon */}
+                      <button
+                        type="button"
+                        onClick={() => handleOpenPaymentApp('phonepe')}
+                        className="w-12 h-12 rounded-full bg-[#5f259f] hover:bg-[#521f8a] border-2 border-purple-400 shadow-lg flex items-center justify-center text-white cursor-pointer transition-all active:scale-90 shrink-0"
+                        title="PhonePe"
+                      >
+                        <span className="font-sans font-black text-xl leading-none select-none">पे</span>
+                      </button>
+
+                      {/* 3. Paytm Icon */}
+                      <button
+                        type="button"
+                        onClick={() => handleOpenPaymentApp('paytm')}
+                        className="w-12 h-12 rounded-full bg-white hover:bg-slate-100 border-2 border-sky-400 hover:border-sky-500 shadow-lg flex items-center justify-center cursor-pointer transition-all active:scale-90 shrink-0"
+                        title="Paytm"
+                      >
+                        <span className="font-sans font-black text-xs text-[#002e6e] tracking-tight select-none">
+                          Pay<span className="text-[#00baf2]">tm</span>
+                        </span>
+                      </button>
+
+                      {/* 4. Saving Card & IFSC Icon */}
+                      <button
+                        type="button"
+                        onClick={handleSaveCardAndIfsc}
+                        className={`w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all active:scale-90 shadow-lg border-2 shrink-0 ${
+                          isCardSaved 
+                            ? 'bg-emerald-600 border-emerald-400 text-white ring-2 ring-emerald-400/50' 
+                            : 'bg-emerald-950/80 hover:bg-emerald-900 border-emerald-500 text-emerald-400'
+                        }`}
+                        title="సేవింగ్ కార్డు (నంబరు & IFSC ఆటో సేవ్)"
+                      >
+                        <CreditCard className="w-5 h-5" />
                       </button>
                     </div>
-                  </div>
 
-                  {/* Supported Payment Apps Bar */}
-                  <div className="pt-2 border-t border-slate-800 flex items-center justify-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-wider flex-wrap">
-                    <span className="px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">PhonePe</span>
-                    <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">Google Pay</span>
-                    <span className="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Paytm</span>
-                    <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">BHIM UPI</span>
+                    {/* Feedback Toast Banner when any button is clicked */}
+                    {copiedType && (
+                      <div className="p-2.5 rounded-xl bg-cyan-950/70 border border-cyan-500/40 text-center animate-in fade-in slide-in-from-top-1 duration-300 flex items-center justify-center gap-2 shadow-md">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span className="text-xs font-bold text-cyan-200">
+                          {copiedType === 'gpay' && 'Google Pay ఓపెన్ అవుతోంది... VPA నంబర్ సేవ్ అయింది!'}
+                          {copiedType === 'phonepe' && 'PhonePe ఓపెన్ అవుతోంది... VPA నంబర్ సేవ్ అయింది!'}
+                          {copiedType === 'paytm' && 'Paytm ఓపెన్ అవుతోంది... VPA నంబర్ సేవ్ అయింది!'}
+                          {copiedType === 'cardsave' && 'నంబరు మరియు IFSC కోడ్ ఆటోమేటిక్‌గా సేవ్ అయింది!'}
+                          {copiedType === 'upi' && 'UPI VPA ఐడీ కాపీ చేయబడింది!'}
+                          {copiedType === 'acc' && 'ఖాతా/కార్డ్ నంబరు కాపీ చేయబడింది!'}
+                          {copiedType === 'ifsc' && 'IFSC కోడ్ కాపీ చేయబడింది!'}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Saving Card & IFSC Automatic Details Box (When user clicks 'సేవింగ్ కార్డు') */}
+                    {isCardSaved && (
+                      <div className="p-3.5 rounded-xl bg-slate-900 border border-emerald-500/40 space-y-2.5 animate-in fade-in zoom-in-95 duration-300 shadow-md">
+                        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-300">
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>కార్డ్ / బ్యాంక్ వివరాలు ఆటోమేటిక్‌గా సేవ్ అయ్యాయి:</span>
+                          </div>
+                          <span className="text-[9px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
+                            SAVED
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                          <div className="flex items-center justify-between p-2 rounded-lg bg-slate-950 border border-slate-800">
+                            <div>
+                              <span className="text-[10px] text-slate-400 block">ఖాతా / కార్డ్ నంబరు</span>
+                              <span className="font-mono font-bold text-slate-100">{accountNumber}</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyPaymentInfo(accountNumber, 'acc')}
+                              className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 text-[10px] font-bold cursor-pointer"
+                            >
+                              {copiedType === 'acc' ? 'కాపీడ్!' : 'కాపీ'}
+                            </button>
+                          </div>
+
+                          <div className="flex items-center justify-between p-2 rounded-lg bg-slate-950 border border-slate-800">
+                            <div>
+                              <span className="text-[10px] text-slate-400 block">IFSC కోడ్</span>
+                              <span className="font-mono font-bold text-emerald-300 uppercase">{ifscCode}</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyPaymentInfo(ifscCode, 'ifsc')}
+                              className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 text-[10px] font-bold cursor-pointer"
+                            >
+                              {copiedType === 'ifsc' ? 'కాపీడ్!' : 'కాపీ'}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+                          <span>ఖాతాదారుని పేరు: <strong className="text-slate-200">{accountHolderName}</strong></span>
+                          <span>బ్యాంక్: <strong className="text-slate-200">{bankName}</strong></span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Single Line Compact UPI VPA Copy Bar */}
+                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900 border border-slate-800 shadow-sm">
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <span className="px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 text-[10px] font-bold border border-cyan-500/30 shrink-0">
+                          UPI VPA
+                        </span>
+                        <span className="text-xs font-mono font-bold text-cyan-300 truncate">{upiId}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyPaymentInfo(upiId, 'upi')}
+                        className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0 ml-2"
+                      >
+                        {copiedType === 'upi' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                        <span>{copiedType === 'upi' ? 'కాపీడ్!' : 'కాపీ'}</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
 

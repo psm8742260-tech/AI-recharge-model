@@ -8,7 +8,19 @@ import JSZip from 'jszip';
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+
+const portArgIndex = process.argv.indexOf('--port');
+const hostArgIndex = process.argv.indexOf('--host');
+
+const PORT = parseInt(
+  process.env.PORT ||
+  (portArgIndex !== -1 && process.argv[portArgIndex + 1] ? process.argv[portArgIndex + 1] : '3000'),
+  10
+);
+
+const HOST =
+  process.env.HOST ||
+  (hostArgIndex !== -1 && process.argv[hostArgIndex + 1] ? process.argv[hostArgIndex + 1] : '0.0.0.0');
 
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
@@ -238,6 +250,15 @@ let store = {
     authorizedAdminMobiles: ['8466062260'],
     isPaymentEnabled: true,
     upiId: 'psm8742260@upi',
+    phonePeNumber: '8466062260',
+    paytmNumber: '8466062260',
+    googlePayNumber: '8466062260',
+    accountNumber: '8466062260',
+    ifscCode: 'PYTM0123456',
+    accountHolderName: 'AI Recharge PSM',
+    bankName: 'Paytm Payments Bank / SBI',
+    cardPaymentDetails: 'RuPay, Visa, MasterCard, All Debit/Credit Cards & Net Banking',
+    isCardPaymentEnabled: true,
     qrCodeUrl: ''
   }
 };
@@ -585,6 +606,15 @@ app.get('/api/plans', (req, res) => {
       isPaymentEnabled: store.systemConfig.isPaymentEnabled,
       qrCodeUrl: store.systemConfig.qrCodeUrl,
       upiId: store.systemConfig.upiId,
+      phonePeNumber: store.systemConfig.phonePeNumber,
+      paytmNumber: store.systemConfig.paytmNumber,
+      googlePayNumber: store.systemConfig.googlePayNumber,
+      accountNumber: store.systemConfig.accountNumber,
+      ifscCode: store.systemConfig.ifscCode,
+      accountHolderName: store.systemConfig.accountHolderName,
+      bankName: store.systemConfig.bankName,
+      cardPaymentDetails: store.systemConfig.cardPaymentDetails,
+      isCardPaymentEnabled: store.systemConfig.isCardPaymentEnabled !== false,
     }
   });
 });
@@ -1203,8 +1233,8 @@ async function startServer() {
     });
   }
 
-  const server = app.listen(PORT, () => {
-    console.log(`🚀 AI Recharge Models Server listening on port ${PORT} [HYBRID VERSION]`);
+  const server = app.listen(PORT, HOST, () => {
+    console.log(`🚀 AI Recharge Models Server listening on http://${HOST}:${PORT} [HYBRID VERSION]`);
   });
   return server;
 }
