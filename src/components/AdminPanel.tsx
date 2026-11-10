@@ -1377,12 +1377,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
             </div>
 
             {/* PWA / TWA Integration Details */}
-            <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-md space-y-4 max-w-2xl">
-              <div className="flex items-center gap-3">
-                <Zap className="w-5 h-5 text-cyan-600" />
-                <h4 className="text-sm font-bold text-slate-900">PWA & Mobile Web Support</h4>
+            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2 max-w-md">
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-cyan-600" />
+                <h4 className="text-xs font-bold text-slate-900">PWA & Mobile Web Support</h4>
               </div>
-              <p className="text-xs text-slate-600">
+              <p className="text-[11px] text-slate-600">
                 PWA / TWA standalone web app and mobile browser configurations are active for all users.
               </p>
             </div>
