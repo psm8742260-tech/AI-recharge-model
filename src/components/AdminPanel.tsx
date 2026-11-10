@@ -129,47 +129,39 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
 
   const handleAdminOpenApp = (app: 'gpay' | 'phonepe' | 'paytm') => {
     const upi = (config.upiId || 'psm8742260@upi').trim();
-    let androidIntent = '';
-    let fallbackScheme = '';
+    const query = `pa=${encodeURIComponent(upi)}&pn=AI%20Recharge&cu=INR`;
+    let directUrl = '';
     let appLabel = '';
 
     if (app === 'gpay') {
       appLabel = 'Google Pay';
-      androidIntent = `intent://pay?pa=${encodeURIComponent(upi)}&pn=AIRecharge&cu=INR#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`;
-      fallbackScheme = `tez://upi/pay?pa=${encodeURIComponent(upi)}&pn=AIRecharge&cu=INR`;
+      directUrl = `tez://upi/pay?${query}`;
     } else if (app === 'phonepe') {
       appLabel = 'PhonePe';
-      androidIntent = `intent://pay?pa=${encodeURIComponent(upi)}&pn=AIRecharge&cu=INR#Intent;scheme=upi;package=com.phonepe.app;end`;
-      fallbackScheme = `phonepe://pay?pa=${encodeURIComponent(upi)}&pn=AIRecharge&cu=INR`;
+      directUrl = `phonepe://pay?${query}`;
     } else if (app === 'paytm') {
       appLabel = 'Paytm';
-      androidIntent = `intent://pay?pa=${encodeURIComponent(upi)}&pn=AIRecharge&cu=INR#Intent;scheme=upi;package=net.one97.paytm;end`;
-      fallbackScheme = `paytmmp://pay?pa=${encodeURIComponent(upi)}&pn=AIRecharge&cu=INR`;
+      directUrl = `paytmmp://pay?${query}`;
     }
 
-    // Always copy UPI ID to clipboard as instant fail-safe
     navigator.clipboard.writeText(upi).catch(() => {});
 
-    const isAndroid = typeof navigator !== 'undefined' && /android/i.test(navigator.userAgent);
-    const targetUrl = isAndroid ? androidIntent : fallbackScheme;
-
-    // Use anchor tag with target="_top" so Android OS / mobile browser immediately opens the app
     try {
       const a = document.createElement('a');
-      a.href = targetUrl;
+      a.href = directUrl;
       a.target = '_top';
       a.rel = 'noopener noreferrer';
       document.body.appendChild(a);
       a.click();
       setTimeout(() => {
         if (document.body.contains(a)) document.body.removeChild(a);
-      }, 200);
+      }, 500);
     } catch (err) {
       try {
-        if (window.top) window.top.location.href = fallbackScheme;
-        else window.location.href = fallbackScheme;
+        if (window.top) window.top.location.href = directUrl;
+        else window.location.href = directUrl;
       } catch (e2) {
-        window.open(`upi://pay?pa=${encodeURIComponent(upi)}&pn=AIRecharge&cu=INR`, '_top');
+        window.open(directUrl, '_top');
       }
     }
 
@@ -667,7 +659,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
   }
 
   return (
-    <div className="space-y-6 pb-16 bg-white border-2 border-slate-200/80 p-4 sm:p-8 rounded-3xl shadow-xl text-slate-800 max-w-7xl mx-auto">
+    <div className="space-y-6 pb-16 bg-transparent p-4 sm:p-8 text-slate-800 max-w-7xl mx-auto">
       {/* Toast Notification */}
       {toastNotification && (
         <div className="fixed top-5 right-5 z-50 p-4 rounded-2xl bg-white border-2 border-cyan-500 text-slate-900 shadow-2xl flex items-center gap-3 animate-in slide-in-from-top-3 duration-300 max-w-md">
@@ -676,8 +668,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
         </div>
       )}
 
-      {/* Top Header Card */}
-      <div className="bg-gradient-to-r from-slate-50 via-white to-slate-50 border border-slate-200 p-5 rounded-2xl shadow-md space-y-4">
+      {/* Top Header Section */}
+      <div className="space-y-4">
         {/* Top Action Bar */}
         <div className="flex items-center justify-between gap-2 w-full">
           <button
@@ -706,7 +698,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
         </div>
 
         {/* Title Section */}
-        <div className="pt-2 border-t border-slate-200">
+        <div className="pt-2">
           <div className="flex flex-wrap items-center gap-2 mb-1">
             <div className="text-xs font-black uppercase tracking-wider text-cyan-800 flex items-center gap-1.5">
               <Shield className="w-4 h-4 text-cyan-600 shrink-0" />
@@ -729,7 +721,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack, onOpenExpo
       </div>
 
       {/* 6 Main Admin Tabs Header */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 p-2 bg-slate-100 rounded-2xl border border-slate-200 shadow-inner">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
         <button
           onClick={() => setActiveTab(0)}
           className={`p-3 text-xs font-bold rounded-xl transition-all flex flex-col sm:flex-row items-center justify-center gap-2 text-center sm:text-left cursor-pointer border ${

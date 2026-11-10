@@ -13,8 +13,9 @@
 2. **No-Numerical Versions:** Do NOT use numerical versioning (e.g., v1.0, v2). Use keywords like `HYBRID` or `LATEST`.
 3. **Strict Integrity Lock:** A system integrity lock is active in `src/version.ts`. Do not modify characters, features, or models without explicit Admin authorization.
 4. **Backup Protocol:** Every significant change must be documented in `/backups/PERMANENT_CODE_BACKUP.md`.
-5. **PWA Refresh:** For UI/Icon updates, use `?v=HYBRID` cache-busting on image paths and manifests.
-6. **Node.js Gateway:** The application uses a hybrid server architecture (`server.ts` -> `server.js` via `app.js`) for cPanel compatibility.
+5. **Unified Build Packaging (Crucial for Live VPS/cPanel):** When running `npm run build`, **ALL project files, components, backend modules, and static assets must be bundled together into a single unified deployment package (`cpanel_public_html.zip` & `dist/`)**. No file or module may be left behind; the entire project must deploy as one cohesive unit to appear live on the VPS/cPanel server.
+6. **PWA Refresh:** For UI/Icon updates, use `?v=HYBRID` cache-busting on image paths and manifests.
+7. **Node.js Gateway:** The application uses a hybrid server architecture (`server.ts` -> `server.js` via `app.js`) for cPanel compatibility.
 
 ## Tech Stack
 - **Frontend:** React 19 + Vite + Tailwind CSS 4

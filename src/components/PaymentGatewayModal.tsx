@@ -104,57 +104,42 @@ export const PaymentGatewayModal: React.FC<PaymentGatewayModalProps> = ({
   const handleOpenPaymentApp = (app: 'gpay' | 'phonepe' | 'paytm') => {
     const amount = activeTab === 'plans' ? selectedPlan.priceINR : selectedTopUp.priceINR;
     const targetUpi = (upiId || 'psm8742260@upi').trim();
-    const planTitle = activeTab === 'plans' ? selectedPlan.name : selectedTopUp.name;
-    const note = encodeURIComponent(`AI Recharge ${planTitle}`);
+    const query = `pa=${encodeURIComponent(targetUpi)}&pn=AI%20Recharge&am=${amount}&cu=INR`;
 
-    let androidIntent = '';
-    let fallbackScheme = '';
-    let appLabel = '';
+    let directUrl = '';
+    let copyVal = targetUpi;
 
     if (app === 'gpay') {
-      appLabel = 'Google Pay';
-      androidIntent = `intent://pay?pa=${encodeURIComponent(targetUpi)}&pn=AI%20Recharge&am=${amount}&cu=INR&tn=${note}#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`;
-      fallbackScheme = `tez://upi/pay?pa=${encodeURIComponent(targetUpi)}&pn=AI%20Recharge&am=${amount}&cu=INR&tn=${note}`;
+      directUrl = `tez://upi/pay?${query}`;
+      copyVal = googlePayNumber || targetUpi;
     } else if (app === 'phonepe') {
-      appLabel = 'PhonePe';
-      androidIntent = `intent://pay?pa=${encodeURIComponent(targetUpi)}&pn=AI%20Recharge&am=${amount}&cu=INR&tn=${note}#Intent;scheme=upi;package=com.phonepe.app;end`;
-      fallbackScheme = `phonepe://pay?pa=${encodeURIComponent(targetUpi)}&pn=AI%20Recharge&am=${amount}&cu=INR&tn=${note}`;
+      directUrl = `phonepe://pay?${query}`;
+      copyVal = phonePeNumber || targetUpi;
     } else if (app === 'paytm') {
-      appLabel = 'Paytm';
-      androidIntent = `intent://pay?pa=${encodeURIComponent(targetUpi)}&pn=AI%20Recharge&am=${amount}&cu=INR&tn=${note}#Intent;scheme=upi;package=net.one97.paytm;end`;
-      fallbackScheme = `paytmmp://pay?pa=${encodeURIComponent(targetUpi)}&pn=AI%20Recharge&am=${amount}&cu=INR&tn=${note}`;
+      directUrl = `paytmmp://pay?${query}`;
+      copyVal = paytmNumber || targetUpi;
     }
-
-    const universalUpi = `upi://pay?pa=${encodeURIComponent(targetUpi)}&pn=AI%20Recharge&am=${amount}&cu=INR&tn=${note}`;
-    const copyVal = app === 'gpay' 
-      ? (googlePayNumber || targetUpi) 
-      : app === 'phonepe' 
-      ? (phonePeNumber || targetUpi) 
-      : (paytmNumber || targetUpi);
 
     navigator.clipboard.writeText(copyVal).catch(() => {});
     setCopiedType(app);
     setTimeout(() => setCopiedType(null), 3500);
 
-    const isAndroid = typeof navigator !== 'undefined' && /android/i.test(navigator.userAgent);
-    const targetUrl = isAndroid ? androidIntent : fallbackScheme;
-
     try {
       const a = document.createElement('a');
-      a.href = targetUrl;
+      a.href = directUrl;
       a.target = '_top';
       a.rel = 'noopener noreferrer';
       document.body.appendChild(a);
       a.click();
       setTimeout(() => {
         if (document.body.contains(a)) document.body.removeChild(a);
-      }, 200);
+      }, 500);
     } catch (e) {
       try {
-        if (window.top) window.top.location.href = fallbackScheme;
-        else window.location.href = fallbackScheme;
+        if (window.top) window.top.location.href = directUrl;
+        else window.location.href = directUrl;
       } catch (e2) {
-        window.open(universalUpi, '_top');
+        window.open(directUrl, '_top');
       }
     }
   };
